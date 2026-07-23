@@ -44,6 +44,23 @@
   .btn-ghost{background:transparent; color:var(--muted); border:1px solid var(--border);}
   .btn-sm{padding:8px 12px; font-size:13px; border-radius:9px;}
 
+  .row{display:flex; gap:8px;}
+
+  /* Registro rápido */
+  .entry-date-label{margin:0 0 10px; font-size:15.5px; font-weight:700;}
+  .entry-date-row{display:flex; gap:8px; margin-bottom:12px;}
+  .entry-date-row input[type=date]{
+    flex:1; background:var(--panel2); border:1px solid var(--border); color:var(--text);
+    border-radius:10px; padding:10px; font-size:14px;
+  }
+  .toggle-btn{
+    flex:1; border-radius:12px; padding:16px 10px; font-size:15px; font-weight:700;
+    cursor:pointer; border:1px solid var(--border); background:var(--panel2); color:var(--muted);
+  }
+  .toggle-btn:active{transform:scale(0.97);}
+  .toggle-btn.dia.active{background:rgba(255,122,47,0.18); border-color:var(--accent); color:var(--accent2);}
+  .toggle-btn.noche.active{background:rgba(91,140,255,0.18); border-color:var(--night); color:var(--night);}
+
   .month-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
   .month-nav .month-label{font-size:16px; font-weight:700; text-transform:capitalize;}
   .month-nav .row{display:flex; gap:6px;}
@@ -66,32 +83,50 @@
   }
   .day-cell.empty{background:transparent; border:none; cursor:default;}
   .day-cell.today{border-color:var(--accent);}
+  .day-cell.selected{box-shadow:0 0 0 2px var(--text) inset;}
   .day-cell .num{font-weight:600;}
   .day-cell.dia{background:rgba(255,122,47,0.18); border-color:rgba(255,122,47,0.5);}
-  .day-cell.dia .icon{color:var(--accent2);}
   .day-cell.noche{background:rgba(91,140,255,0.18); border-color:rgba(91,140,255,0.5);}
-  .day-cell.noche .icon{color:var(--night);}
-  .day-cell .icon{font-size:13px; line-height:1;}
+  .day-cell.dia.noche{background:linear-gradient(135deg, rgba(255,122,47,0.22), rgba(91,140,255,0.22)); border-color:var(--accent2);}
+  .day-cell .icon{font-size:10.5px; line-height:1; letter-spacing:-1px;}
   .day-cell:active{transform:scale(0.95);}
 
-  .legend{display:flex; gap:14px; margin-top:12px; font-size:12px; color:var(--muted); flex-wrap:wrap;}
+  .legend{display:flex; gap:12px; margin-top:12px; font-size:11.5px; color:var(--muted); flex-wrap:wrap;}
   .legend .sw{display:inline-flex; align-items:center; gap:6px;}
   .legend .dot2{width:11px; height:11px; border-radius:4px; display:inline-block;}
   .legend .dot-dia{background:var(--accent);}
   .legend .dot-noche{background:var(--night);}
+  .legend .dot-both{background:linear-gradient(135deg,var(--accent),var(--night));}
   .legend .dot-none{background:var(--panel2); border:1px solid var(--border);}
-
-  .summary-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:2px;}
-  .summary-item{background:var(--panel2); border:1px solid var(--border); border-radius:12px; padding:12px; text-align:center;}
-  .summary-item .num{font-size:22px; font-weight:700;}
-  .summary-item .lbl{font-size:11px; color:var(--muted); margin-top:2px;}
 
   .section-title{display:flex; justify-content:space-between; align-items:center; margin:0 0 10px;}
   .section-title h3{margin:0; font-size:15px;}
 
-  .footer-actions{display:flex; gap:10px; margin-top:4px;}
+  .rate-row{display:flex; align-items:center; gap:8px; margin-bottom:14px; font-size:13px; color:var(--muted);}
+  .rate-row input{
+    width:110px; background:var(--panel2); border:1px solid var(--border); color:var(--text);
+    border-radius:10px; padding:9px; font-size:14px;
+  }
 
-  .empty-msg{text-align:center; color:var(--muted); padding:20px 10px; font-size:13px;}
+  .month-total{
+    display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;
+    padding:10px 12px; background:var(--panel2); border:1px solid var(--border); border-radius:12px;
+  }
+  .month-total .mt-lbl{font-size:12px; color:var(--muted);}
+  .month-total .mt-val{font-size:20px; font-weight:700;}
+
+  .quincena-item{
+    background:var(--panel2); border:1px solid var(--border); border-radius:12px;
+    padding:12px; margin-bottom:10px;
+  }
+  .quincena-item.paid{border-color:rgba(46,204,113,0.5); background:rgba(46,204,113,0.06);}
+  .qi-top{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:4px;}
+  .qi-label{font-weight:700; font-size:14px;}
+  .qi-stats{font-size:12.5px; color:var(--muted); margin-bottom:6px;}
+  .qi-total{font-size:20px; font-weight:700;}
+  .paid-toggle.is-paid{color:var(--ok); border-color:rgba(46,204,113,0.5);}
+
+  .footer-actions{display:flex; gap:10px; margin-top:4px;}
 </style>
 </head>
 <body>
@@ -101,10 +136,22 @@
     <h1><span class="dot"></span> Control de Turnos</h1>
     <a class="navlink" href="index.html">Stock →</a>
   </div>
-  <p>Registrá los días que trabajaste, turno día o noche</p>
+  <p>Registrá los días que trabajaste y controlá el pago por quincena</p>
 </header>
 
 <div class="container">
+
+  <div class="card" id="quickEntryCard">
+    <h3 class="entry-date-label" id="entryDateLabel">Hoy</h3>
+    <div class="entry-date-row">
+      <input type="date" id="entryDateInput">
+      <button class="btn btn-ghost btn-sm" id="btnEntryToday">Hoy</button>
+    </div>
+    <div class="row">
+      <button class="toggle-btn dia" id="toggleDia">☀️ Día</button>
+      <button class="toggle-btn noche" id="toggleNoche">🌙 Noche</button>
+    </div>
+  </div>
 
   <div class="card">
     <div class="month-nav">
@@ -125,25 +172,29 @@
       <span class="sw"><span class="dot2 dot-none"></span> Sin turno</span>
       <span class="sw"><span class="dot2 dot-dia"></span> Día</span>
       <span class="sw"><span class="dot2 dot-noche"></span> Noche</span>
+      <span class="sw"><span class="dot2 dot-both"></span> Día + Noche</span>
     </div>
   </div>
 
   <div class="card">
-    <div class="section-title"><h3>Resumen del mes</h3></div>
-    <div class="summary-grid">
-      <div class="summary-item">
-        <div class="num" id="sumTotal">0</div>
-        <div class="lbl">Días trabajados</div>
+    <div class="section-title"><h3>Quincenas de <span id="quincenaMonthLabel"></span></h3></div>
+    <div class="rate-row">
+      Pago por turno: $ <input type="number" id="rateInput" min="0" step="500">
+    </div>
+    <div class="month-total">
+      <div>
+        <div class="mt-lbl">Total del mes</div>
+        <div class="mt-val" id="monthTotalVal">$0</div>
       </div>
-      <div class="summary-item">
-        <div class="num" id="sumDia">0</div>
-        <div class="lbl">Turnos día</div>
-      </div>
-      <div class="summary-item">
-        <div class="num" id="sumNoche">0</div>
-        <div class="lbl">Turnos noche</div>
+      <div style="text-align:right;">
+        <div class="mt-lbl">Turnos</div>
+        <div class="mt-val" id="monthTotalTurnos">0</div>
       </div>
     </div>
+    <div id="quincenaList"></div>
+  </div>
+
+  <div class="card">
     <div class="footer-actions">
       <button class="btn btn-secondary btn-sm" id="btnExport" style="flex:1;">Exportar CSV</button>
     </div>
@@ -155,18 +206,68 @@
 (function(){
   "use strict";
 
-  const STORAGE_KEY = "turnos_registro_v1";
-  let turnos = {}; // { "YYYY-MM-DD": "dia" | "noche" }
-  let viewYear, viewMonth; // viewMonth 0-11
+  const STORAGE_KEY = "turnos_registro_v2";
+  const STORAGE_KEY_OLD = "turnos_registro_v1";
+  const RATE_KEY = "turnos_valor_turno_v1";
+  const PAID_KEY = "turnos_quincenas_pagadas_v1";
+  const DEFAULT_RATE = 30000;
+
+  let turnos = {};   // { "YYYY-MM-DD": { dia:bool, noche:bool } }
+  let paidQuincenas = {}; // { "YYYY-MM-Q1": true }
+  let rate = DEFAULT_RATE;
+  let viewYear, viewMonth; // calendar view, viewMonth 0-11
+  let entryKey; // selected date for quick entry, "YYYY-MM-DD"
 
   function loadTurnos(){
     try{
       const raw = localStorage.getItem(STORAGE_KEY);
-      turnos = raw ? JSON.parse(raw) : {};
+      if(raw){ turnos = JSON.parse(raw); return; }
+      // migración desde v1 (un solo turno por día)
+      const oldRaw = localStorage.getItem(STORAGE_KEY_OLD);
+      if(oldRaw){
+        const old = JSON.parse(oldRaw);
+        turnos = {};
+        Object.keys(old).forEach(key => {
+          turnos[key] = { dia: old[key] === 'dia', noche: old[key] === 'noche' };
+        });
+        saveTurnos();
+      } else {
+        turnos = {};
+      }
     }catch(e){ turnos = {}; }
   }
   function saveTurnos(){
     localStorage.setItem(STORAGE_KEY, JSON.stringify(turnos));
+  }
+
+  function loadRate(){
+    const raw = localStorage.getItem(RATE_KEY);
+    rate = raw ? parseFloat(raw) : DEFAULT_RATE;
+    if(!isFinite(rate) || rate < 0) rate = DEFAULT_RATE;
+  }
+  function saveRate(){
+    localStorage.setItem(RATE_KEY, String(rate));
+  }
+
+  function loadPaid(){
+    try{
+      const raw = localStorage.getItem(PAID_KEY);
+      paidQuincenas = raw ? JSON.parse(raw) : {};
+    }catch(e){ paidQuincenas = {}; }
+  }
+  function savePaid(){
+    localStorage.setItem(PAID_KEY, JSON.stringify(paidQuincenas));
+  }
+
+  function getShift(key){
+    return turnos[key] || { dia:false, noche:false };
+  }
+  function setShift(key, type, value){
+    const s = getShift(key);
+    s[type] = value;
+    if(!s.dia && !s.noche){ delete turnos[key]; }
+    else { turnos[key] = s; }
+    saveTurnos();
   }
 
   function pad(n){ return String(n).padStart(2,'0'); }
@@ -178,7 +279,47 @@
   }
 
   const MONTH_NAMES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  const DAY_NAMES = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
 
+  function formatFullDate(y,m,d){
+    const dt = new Date(y,m,d);
+    return `${DAY_NAMES[dt.getDay()]} ${d} de ${MONTH_NAMES[m]} de ${y}`;
+  }
+
+  function formatMoney(n){
+    const sign = n < 0 ? '-' : '';
+    const rounded = Math.round(Math.abs(n));
+    return sign + '$' + rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+
+  // ---------- Registro rápido (hoy o fecha elegida) ----------
+  function refreshEntry(){
+    entryKey = document.getElementById('entryDateInput').value;
+    if(!entryKey) return;
+    const [y,m,d] = entryKey.split('-').map(Number);
+    const prefix = entryKey === todayKey() ? 'Hoy, ' : '';
+    const full = formatFullDate(y, m-1, d);
+    document.getElementById('entryDateLabel').textContent = prefix + full.charAt(0).toUpperCase() + full.slice(1);
+
+    const s = getShift(entryKey);
+    document.getElementById('toggleDia').classList.toggle('active', s.dia);
+    document.getElementById('toggleNoche').classList.toggle('active', s.noche);
+  }
+
+  function toggleEntryShift(type){
+    const s = getShift(entryKey);
+    setShift(entryKey, type, !s[type]);
+    refreshEntry();
+    renderCalendar();
+    renderQuincenas();
+  }
+
+  function syncCalendarToEntry(){
+    const [y,m] = entryKey.split('-').map(Number);
+    viewYear = y; viewMonth = m - 1;
+  }
+
+  // ---------- Calendario ----------
   function renderCalendar(){
     document.getElementById('monthLabel').textContent = `${MONTH_NAMES[viewMonth]} ${viewYear}`;
 
@@ -186,8 +327,7 @@
     grid.innerHTML = '';
 
     const firstOfMonth = new Date(viewYear, viewMonth, 1);
-    // Monday-first index: 0=Mon ... 6=Sun
-    const startOffset = (firstOfMonth.getDay() + 6) % 7;
+    const startOffset = (firstOfMonth.getDay() + 6) % 7; // lunes-first
     const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
     const tKey = todayKey();
 
@@ -199,38 +339,25 @@
 
     for(let d=1; d<=daysInMonth; d++){
       const key = dateKey(viewYear, viewMonth, d);
-      const shift = turnos[key];
+      const s = getShift(key);
+      let cls = 'day-cell';
+      if(s.dia) cls += ' dia';
+      if(s.noche) cls += ' noche';
+      if(key === tKey) cls += ' today';
+      if(key === entryKey) cls += ' selected';
+
+      const icon = (s.dia ? '☀️' : '') + (s.noche ? '🌙' : '');
       const el = document.createElement('div');
-      el.className = 'day-cell' + (shift ? ' ' + shift : '') + (key === tKey ? ' today' : '');
-      el.innerHTML = `<div class="num">${d}</div><div class="icon">${shift === 'dia' ? '☀️' : shift === 'noche' ? '🌙' : ''}</div>`;
-      el.addEventListener('click', () => cycleDay(key));
+      el.className = cls;
+      el.innerHTML = `<div class="num">${d}</div><div class="icon">${icon}</div>`;
+      el.addEventListener('click', () => {
+        document.getElementById('entryDateInput').value = key;
+        refreshEntry();
+        renderCalendar();
+        renderQuincenas();
+      });
       grid.appendChild(el);
     }
-
-    renderSummary();
-  }
-
-  function cycleDay(key){
-    const current = turnos[key];
-    if(!current){ turnos[key] = 'dia'; }
-    else if(current === 'dia'){ turnos[key] = 'noche'; }
-    else { delete turnos[key]; }
-    saveTurnos();
-    renderCalendar();
-  }
-
-  function renderSummary(){
-    const prefix = `${viewYear}-${pad(viewMonth+1)}-`;
-    let dia = 0, noche = 0;
-    Object.keys(turnos).forEach(key => {
-      if(key.startsWith(prefix)){
-        if(turnos[key] === 'dia') dia++;
-        else if(turnos[key] === 'noche') noche++;
-      }
-    });
-    document.getElementById('sumDia').textContent = dia;
-    document.getElementById('sumNoche').textContent = noche;
-    document.getElementById('sumTotal').textContent = dia + noche;
   }
 
   function changeMonth(delta){
@@ -238,6 +365,7 @@
     if(viewMonth < 0){ viewMonth = 11; viewYear--; }
     else if(viewMonth > 11){ viewMonth = 0; viewYear++; }
     renderCalendar();
+    renderQuincenas();
   }
 
   function goToday(){
@@ -245,18 +373,88 @@
     viewYear = t.getFullYear();
     viewMonth = t.getMonth();
     renderCalendar();
+    renderQuincenas();
   }
 
+  // ---------- Quincenas ----------
+  function quincenaOfDay(day){ return day <= 15 ? 1 : 2; }
+
+  function quincenaLabel(q, year, month){
+    if(q === 1) return `1 al 15 de ${MONTH_NAMES[month]}`;
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    return `16 al ${lastDay} de ${MONTH_NAMES[month]}`;
+  }
+
+  function quincenaStorageKey(year, month, q){
+    return `${year}-${pad(month+1)}-Q${q}`;
+  }
+
+  function computeQuincenaStats(year, month, q){
+    const prefix = `${year}-${pad(month+1)}-`;
+    let diaCount = 0, nocheCount = 0;
+    Object.keys(turnos).forEach(key => {
+      if(!key.startsWith(prefix)) return;
+      const day = parseInt(key.slice(-2), 10);
+      if(quincenaOfDay(day) !== q) return;
+      const s = turnos[key];
+      if(s.dia) diaCount++;
+      if(s.noche) nocheCount++;
+    });
+    const turnosCount = diaCount + nocheCount;
+    return { diaCount, nocheCount, turnosCount, total: turnosCount * rate };
+  }
+
+  function renderQuincenas(){
+    document.getElementById('rateInput').value = rate;
+    document.getElementById('quincenaMonthLabel').textContent = `${MONTH_NAMES[viewMonth]} ${viewYear}`;
+
+    const q1 = computeQuincenaStats(viewYear, viewMonth, 1);
+    const q2 = computeQuincenaStats(viewYear, viewMonth, 2);
+
+    document.getElementById('monthTotalVal').textContent = formatMoney(q1.total + q2.total);
+    document.getElementById('monthTotalTurnos').textContent = q1.turnosCount + q2.turnosCount;
+
+    const listEl = document.getElementById('quincenaList');
+    listEl.innerHTML = [1,2].map(q => {
+      const stats = q === 1 ? q1 : q2;
+      const key = quincenaStorageKey(viewYear, viewMonth, q);
+      const isPaid = !!paidQuincenas[key];
+      return `
+        <div class="quincena-item ${isPaid ? 'paid' : ''}">
+          <div class="qi-top">
+            <div class="qi-label">${quincenaLabel(q, viewYear, viewMonth)}</div>
+            <button class="btn btn-ghost btn-sm paid-toggle ${isPaid ? 'is-paid' : ''}" data-key="${key}">
+              ${isPaid ? '✓ Pagado' : 'Marcar pagado'}
+            </button>
+          </div>
+          <div class="qi-stats">${stats.turnosCount} turno${stats.turnosCount === 1 ? '' : 's'} · ${stats.diaCount} día / ${stats.nocheCount} noche</div>
+          <div class="qi-total">${formatMoney(stats.total)}</div>
+        </div>
+      `;
+    }).join('');
+
+    listEl.querySelectorAll('.paid-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.getAttribute('data-key');
+        paidQuincenas[key] = !paidQuincenas[key];
+        savePaid();
+        renderQuincenas();
+      });
+    });
+  }
+
+  // ---------- Exportar ----------
   function exportCsv(){
     const keys = Object.keys(turnos).sort();
     if(keys.length === 0){
       alert('Todavía no registraste ningún turno.');
       return;
     }
-    let csv = 'Fecha,Turno\n';
+    let csv = 'Fecha,Dia,Noche,Turnos,Pago\n';
     keys.forEach(key => {
-      const label = turnos[key] === 'dia' ? 'Día' : 'Noche';
-      csv += `${key},${label}\n`;
+      const s = turnos[key];
+      const turnosCount = (s.dia ? 1 : 0) + (s.noche ? 1 : 0);
+      csv += `${key},${s.dia ? 'Si' : 'No'},${s.noche ? 'Si' : 'No'},${turnosCount},${turnosCount * rate}\n`;
     });
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -271,16 +469,49 @@
 
   function init(){
     loadTurnos();
+    loadRate();
+    loadPaid();
+
+    const tKey = todayKey();
+    document.getElementById('entryDateInput').value = tKey;
+    entryKey = tKey;
+
     const t = new Date();
     viewYear = t.getFullYear();
     viewMonth = t.getMonth();
 
+    document.getElementById('entryDateInput').addEventListener('change', () => {
+      refreshEntry();
+      syncCalendarToEntry();
+      renderCalendar();
+      renderQuincenas();
+    });
+    document.getElementById('btnEntryToday').addEventListener('click', () => {
+      document.getElementById('entryDateInput').value = todayKey();
+      refreshEntry();
+      syncCalendarToEntry();
+      renderCalendar();
+      renderQuincenas();
+    });
+    document.getElementById('toggleDia').addEventListener('click', () => toggleEntryShift('dia'));
+    document.getElementById('toggleNoche').addEventListener('click', () => toggleEntryShift('noche'));
+
     document.getElementById('btnPrevMonth').addEventListener('click', () => changeMonth(-1));
     document.getElementById('btnNextMonth').addEventListener('click', () => changeMonth(1));
     document.getElementById('btnToday').addEventListener('click', goToday);
+
+    document.getElementById('rateInput').addEventListener('change', (e) => {
+      const v = parseFloat(e.target.value);
+      rate = (isFinite(v) && v >= 0) ? v : DEFAULT_RATE;
+      saveRate();
+      renderQuincenas();
+    });
+
     document.getElementById('btnExport').addEventListener('click', exportCsv);
 
+    refreshEntry();
     renderCalendar();
+    renderQuincenas();
   }
 
   init();
