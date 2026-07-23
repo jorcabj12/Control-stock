@@ -19,9 +19,12 @@
     padding:16px 16px 12px; background:linear-gradient(180deg,#1a1d24,#14161b);
     border-bottom:1px solid var(--border); position:sticky; top:0; z-index:20;
   }
+  header .head-row{display:flex; align-items:center; justify-content:space-between; gap:8px;}
   header h1{margin:0; font-size:19px; display:flex; align-items:center; gap:8px;}
   header h1 span.dot{width:9px;height:9px;border-radius:50%;background:var(--accent);display:inline-block;}
   header p{margin:4px 0 0; color:var(--muted); font-size:12.5px;}
+  header a.navlink{color:var(--muted); font-size:12.5px; text-decoration:none; border:1px solid var(--border); border-radius:8px; padding:6px 10px;}
+  header a.navlink:active{background:var(--panel2);}
 
   .container{max-width:760px; margin:0 auto; padding:14px;}
 
@@ -143,7 +146,10 @@
 <body>
 
 <header>
-  <h1><span class="dot"></span> Control de Stock</h1>
+  <div class="head-row">
+    <h1><span class="dot"></span> Control de Stock</h1>
+    <a class="navlink" href="turnos.html">Turnos →</a>
+  </div>
   <p>Hueburguers · escaneo de código de barras</p>
 </header>
 
