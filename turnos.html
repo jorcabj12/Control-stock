@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Control de Turnos</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1f232c; --border:#2a2f3a;
+    --text:#e8eaed; --muted:#9aa1ac; --accent:#ff7a2f; --accent2:#ffa15c;
+    --ok:#2ecc71; --warn:#f5c542; --danger:#e5484d; --night:#5b8cff;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--text); padding-bottom:40px;
+  }
+  header{
+    padding:16px 16px 12px; background:linear-gradient(180deg,#1a1d24,#14161b);
+    border-bottom:1px solid var(--border); position:sticky; top:0; z-index:20;
+  }
+  header .head-row{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  header h1{margin:0; font-size:19px; display:flex; align-items:center; gap:8px;}
+  header h1 span.dot{width:9px;height:9px;border-radius:50%;background:var(--accent);display:inline-block;}
+  header p{margin:4px 0 0; color:var(--muted); font-size:12.5px;}
+  header a.navlink{color:var(--muted); font-size:12.5px; text-decoration:none; border:1px solid var(--border); border-radius:8px; padding:6px 10px;}
+  header a.navlink:active{background:var(--panel2);}
+
+  .container{max-width:760px; margin:0 auto; padding:14px;}
+
+  .card{
+    background:var(--panel); border:1px solid var(--border); border-radius:14px;
+    padding:14px; margin-bottom:14px;
+  }
+
+  .btn{
+    border:none; border-radius:11px; padding:13px 16px; font-size:15px; font-weight:600;
+    cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    transition:transform .05s ease;
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn-primary{background:var(--accent); color:#fff;}
+  .btn-secondary{background:var(--panel2); color:var(--text); border:1px solid var(--border);}
+  .btn-ghost{background:transparent; color:var(--muted); border:1px solid var(--border);}
+  .btn-sm{padding:8px 12px; font-size:13px; border-radius:9px;}
+
+  .month-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
+  .month-nav .month-label{font-size:16px; font-weight:700; text-transform:capitalize;}
+  .month-nav .row{display:flex; gap:6px;}
+  .icon-btn{
+    width:38px; height:38px; border-radius:10px; border:1px solid var(--border);
+    background:var(--panel2); color:var(--text); font-size:16px; cursor:pointer;
+  }
+  .icon-btn:active{background:#282d38;}
+
+  .weekdays, .days-grid{
+    display:grid; grid-template-columns:repeat(7,1fr); gap:6px;
+  }
+  .weekdays{margin-bottom:6px;}
+  .weekdays div{text-align:center; font-size:11px; color:var(--muted); font-weight:600;}
+
+  .day-cell{
+    aspect-ratio:1; border-radius:10px; background:var(--panel2); border:1px solid var(--border);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-size:13px; cursor:pointer; position:relative; gap:2px;
+  }
+  .day-cell.empty{background:transparent; border:none; cursor:default;}
+  .day-cell.today{border-color:var(--accent);}
+  .day-cell .num{font-weight:600;}
+  .day-cell.dia{background:rgba(255,122,47,0.18); border-color:rgba(255,122,47,0.5);}
+  .day-cell.dia .icon{color:var(--accent2);}
+  .day-cell.noche{background:rgba(91,140,255,0.18); border-color:rgba(91,140,255,0.5);}
+  .day-cell.noche .icon{color:var(--night);}
+  .day-cell .icon{font-size:13px; line-height:1;}
+  .day-cell:active{transform:scale(0.95);}
+
+  .legend{display:flex; gap:14px; margin-top:12px; font-size:12px; color:var(--muted); flex-wrap:wrap;}
+  .legend .sw{display:inline-flex; align-items:center; gap:6px;}
+  .legend .dot2{width:11px; height:11px; border-radius:4px; display:inline-block;}
+  .legend .dot-dia{background:var(--accent);}
+  .legend .dot-noche{background:var(--night);}
+  .legend .dot-none{background:var(--panel2); border:1px solid var(--border);}
+
+  .summary-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:2px;}
+  .summary-item{background:var(--panel2); border:1px solid var(--border); border-radius:12px; padding:12px; text-align:center;}
+  .summary-item .num{font-size:22px; font-weight:700;}
+  .summary-item .lbl{font-size:11px; color:var(--muted); margin-top:2px;}
+
+  .section-title{display:flex; justify-content:space-between; align-items:center; margin:0 0 10px;}
+  .section-title h3{margin:0; font-size:15px;}
+
+  .footer-actions{display:flex; gap:10px; margin-top:4px;}
+
+  .empty-msg{text-align:center; color:var(--muted); padding:20px 10px; font-size:13px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-row">
+    <h1><span class="dot"></span> Control de Turnos</h1>
+    <a class="navlink" href="index.html">Stock →</a>
+  </div>
+  <p>Registrá los días que trabajaste, turno día o noche</p>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <div class="month-nav">
+      <button class="icon-btn" id="btnPrevMonth">‹</button>
+      <div class="month-label" id="monthLabel"></div>
+      <div class="row">
+        <button class="btn btn-ghost btn-sm" id="btnToday">Hoy</button>
+        <button class="icon-btn" id="btnNextMonth">›</button>
+      </div>
+    </div>
+
+    <div class="weekdays">
+      <div>L</div><div>M</div><div>M</div><div>J</div><div>V</div><div>S</div><div>D</div>
+    </div>
+    <div class="days-grid" id="daysGrid"></div>
+
+    <div class="legend">
+      <span class="sw"><span class="dot2 dot-none"></span> Sin turno</span>
+      <span class="sw"><span class="dot2 dot-dia"></span> Día</span>
+      <span class="sw"><span class="dot2 dot-noche"></span> Noche</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title"><h3>Resumen del mes</h3></div>
+    <div class="summary-grid">
+      <div class="summary-item">
+        <div class="num" id="sumTotal">0</div>
+        <div class="lbl">Días trabajados</div>
+      </div>
+      <div class="summary-item">
+        <div class="num" id="sumDia">0</div>
+        <div class="lbl">Turnos día</div>
+      </div>
+      <div class="summary-item">
+        <div class="num" id="sumNoche">0</div>
+        <div class="lbl">Turnos noche</div>
+      </div>
+    </div>
+    <div class="footer-actions">
+      <button class="btn btn-secondary btn-sm" id="btnExport" style="flex:1;">Exportar CSV</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const STORAGE_KEY = "turnos_registro_v1";
+  let turnos = {}; // { "YYYY-MM-DD": "dia" | "noche" }
+  let viewYear, viewMonth; // viewMonth 0-11
+
+  function loadTurnos(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      turnos = raw ? JSON.parse(raw) : {};
+    }catch(e){ turnos = {}; }
+  }
+  function saveTurnos(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(turnos));
+  }
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function dateKey(y,m,d){ return `${y}-${pad(m+1)}-${pad(d)}`; }
+
+  function todayKey(){
+    const t = new Date();
+    return dateKey(t.getFullYear(), t.getMonth(), t.getDate());
+  }
+
+  const MONTH_NAMES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+
+  function renderCalendar(){
+    document.getElementById('monthLabel').textContent = `${MONTH_NAMES[viewMonth]} ${viewYear}`;
+
+    const grid = document.getElementById('daysGrid');
+    grid.innerHTML = '';
+
+    const firstOfMonth = new Date(viewYear, viewMonth, 1);
+    // Monday-first index: 0=Mon ... 6=Sun
+    const startOffset = (firstOfMonth.getDay() + 6) % 7;
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const tKey = todayKey();
+
+    for(let i=0; i<startOffset; i++){
+      const el = document.createElement('div');
+      el.className = 'day-cell empty';
+      grid.appendChild(el);
+    }
+
+    for(let d=1; d<=daysInMonth; d++){
+      const key = dateKey(viewYear, viewMonth, d);
+      const shift = turnos[key];
+      const el = document.createElement('div');
+      el.className = 'day-cell' + (shift ? ' ' + shift : '') + (key === tKey ? ' today' : '');
+      el.innerHTML = `<div class="num">${d}</div><div class="icon">${shift === 'dia' ? '☀️' : shift === 'noche' ? '🌙' : ''}</div>`;
+      el.addEventListener('click', () => cycleDay(key));
+      grid.appendChild(el);
+    }
+
+    renderSummary();
+  }
+
+  function cycleDay(key){
+    const current = turnos[key];
+    if(!current){ turnos[key] = 'dia'; }
+    else if(current === 'dia'){ turnos[key] = 'noche'; }
+    else { delete turnos[key]; }
+    saveTurnos();
+    renderCalendar();
+  }
+
+  function renderSummary(){
+    const prefix = `${viewYear}-${pad(viewMonth+1)}-`;
+    let dia = 0, noche = 0;
+    Object.keys(turnos).forEach(key => {
+      if(key.startsWith(prefix)){
+        if(turnos[key] === 'dia') dia++;
+        else if(turnos[key] === 'noche') noche++;
+      }
+    });
+    document.getElementById('sumDia').textContent = dia;
+    document.getElementById('sumNoche').textContent = noche;
+    document.getElementById('sumTotal').textContent = dia + noche;
+  }
+
+  function changeMonth(delta){
+    viewMonth += delta;
+    if(viewMonth < 0){ viewMonth = 11; viewYear--; }
+    else if(viewMonth > 11){ viewMonth = 0; viewYear++; }
+    renderCalendar();
+  }
+
+  function goToday(){
+    const t = new Date();
+    viewYear = t.getFullYear();
+    viewMonth = t.getMonth();
+    renderCalendar();
+  }
+
+  function exportCsv(){
+    const keys = Object.keys(turnos).sort();
+    if(keys.length === 0){
+      alert('Todavía no registraste ningún turno.');
+      return;
+    }
+    let csv = 'Fecha,Turno\n';
+    keys.forEach(key => {
+      const label = turnos[key] === 'dia' ? 'Día' : 'Noche';
+      csv += `${key},${label}\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'turnos.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function init(){
+    loadTurnos();
+    const t = new Date();
+    viewYear = t.getFullYear();
+    viewMonth = t.getMonth();
+
+    document.getElementById('btnPrevMonth').addEventListener('click', () => changeMonth(-1));
+    document.getElementById('btnNextMonth').addEventListener('click', () => changeMonth(1));
+    document.getElementById('btnToday').addEventListener('click', goToday);
+    document.getElementById('btnExport').addEventListener('click', exportCsv);
+
+    renderCalendar();
+  }
+
+  init();
+})();
+</script>
+
+</body>
+</html>
