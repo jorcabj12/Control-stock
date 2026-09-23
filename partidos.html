@@ -100,6 +100,12 @@
   .record b.V{color:var(--accent2);} .record b.E{color:var(--gold);} .record b.D{color:#ff7b7f;}
   .day-cell.rE{background:rgba(245,197,66,0.16); border-color:rgba(245,197,66,0.5);}
   .day-cell.rD{background:rgba(229,72,77,0.16); border-color:rgba(229,72,77,0.5);}
+  .nota-lbl{font-size:11.5px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px;}
+  .nota-row{display:grid; grid-template-columns:repeat(10,1fr); gap:4px; margin-bottom:12px;}
+  .nota-btn{aspect-ratio:1; max-width:100%; border-radius:9px; border:1px solid var(--border); background:var(--panel2); color:var(--muted); font-size:14px; font-weight:700; cursor:pointer; padding:0; font-family:inherit; font-variant-numeric:tabular-nums;}
+  .nota-btn.on{background:rgba(91,140,255,0.2); border-color:var(--blue); color:#9db8ff;}
+  .nota-btn.sel{background:var(--blue); border-color:var(--blue); color:#fff;}
+  .badge.N{background:rgba(91,140,255,0.18); color:#9db8ff;}
   .del.confirm{color:var(--danger); border-color:rgba(229,72,77,.6);}
   .empty-msg{color:var(--muted); font-size:13px; text-align:center; padding:12px;}
   .footer-actions{display:flex; gap:10px; flex-wrap:wrap;}
@@ -141,6 +147,8 @@
       <button type="button" class="res-btn E" data-r="E">🤝 Empate</button>
       <button type="button" class="res-btn D" data-r="D">❌ Derrota</button>
     </div>
+    <div class="nota-lbl">Calificación del partido <span id="notaTxt"></span></div>
+    <div class="nota-row" id="notaRow"></div>
     <div class="row">
       <button class="btn btn-primary" id="btnSave" style="flex:1;">⚽ Registrar partido</button>
       <button class="btn btn-ghost" id="btnCancel" hidden>Cancelar</button>
@@ -177,6 +185,17 @@
   </div>
 
   <div class="card">
+    <div class="section-title"><h3>Promedios desde el 22/09/2026</h3><span class="m-date" id="sP"></span></div>
+    <div class="totals career">
+      <div class="tot"><div class="mt-lbl">Nota</div><div class="mt-val" id="sN">–</div></div>
+      <div class="tot"><div class="mt-lbl">Min/PJ</div><div class="mt-val" id="sM">–</div></div>
+      <div class="tot"><div class="mt-lbl">Goles/PJ</div><div class="mt-val" id="sG">–</div></div>
+      <div class="tot"><div class="mt-lbl">Asist/PJ</div><div class="mt-val" id="sA">–</div></div>
+    </div>
+    <div class="record" id="sR"></div>
+  </div>
+
+  <div class="card">
     <div class="section-title"><h3>Total acumulado</h3></div>
     <div class="totals career">
       <div class="tot"><div class="mt-lbl">Partidos</div><div class="mt-val" id="tP">0</div></div>
@@ -201,7 +220,7 @@
   const LS = "mispartidos.v1";
   const MONTH_NAMES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
   const DAY_NAMES = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
-  let res = "", rows = [], db = null, editId = null, confirmId = null, viewYear, viewMonth, entryKey;
+  let nota = 0, res = "", rows = [], db = null, editId = null, confirmId = null, viewYear, viewMonth, entryKey;
 
   const pad = n => String(n).padStart(2,'0');
   const dateKey = (y,m,d) => `${y}-${pad(m+1)}-${pad(d)}`;
@@ -212,10 +231,14 @@
   function lsLoad(){ try{ return JSON.parse(localStorage.getItem(LS)||"[]"); }catch(e){ return []; } }
   function lsSave(){ try{ localStorage.setItem(LS, JSON.stringify(rows)); }catch(e){} }
   const sum = (arr,k) => arr.reduce((t,r)=>t+(+r[k]||0),0);
+  const SINCE = '2026-09-22';
   const RES = {V:'Victoria',E:'Empate',D:'Derrota'};
   function record(arr){ const c={V:0,E:0,D:0}; arr.forEach(r=>{ if(c[r.res]!=null) c[r.res]++; });
     const n=c.V+c.E+c.D; if(!n) return '';
     return `<b class="V">${c.V}</b> ganados · <b class="E">${c.E}</b> empatados · <b class="D">${c.D}</b> perdidos · ${Math.round(c.V*100/n)}% victorias`; }
+  function setNota(n){ nota = n; $('notaTxt').textContent = n ? `· ${n}/10` : '';
+    document.querySelectorAll('.nota-btn').forEach(b=>{ const v=+b.dataset.n; b.classList.toggle('on', v<n); b.classList.toggle('sel', v===n); }); }
+  function avgNota(arr){ const v=arr.filter(r=>r.nota>0); return v.length ? ` · nota promedio <b>${(v.reduce((t,r)=>t+r.nota,0)/v.length).toFixed(1)}</b>` : ''; }
   function setRes(r){ res = r; document.querySelectorAll('.res-btn').forEach(b=>b.classList.toggle('active', b.dataset.r===res)); }
 
   function refreshEntry(){
@@ -249,13 +272,19 @@
     const prefix = `${viewYear}-${pad(viewMonth+1)}-`;
     const ms = rows.filter(r=>r.fecha.startsWith(prefix)).sort((a,b)=>b.fecha.localeCompare(a.fecha)||b.n-a.n);
     $('listMonthLabel').textContent = `${MONTH_NAMES[viewMonth]} ${viewYear}`;
-    $('mP').textContent = ms.length; $('mM').textContent = sum(ms,'min'); $('mG').textContent = sum(ms,'goles'); $('mA').textContent = sum(ms,'asis'); $('mR').innerHTML = record(ms);
-    $('tP').textContent = rows.length; $('tM').textContent = sum(rows,'min'); $('tG').textContent = sum(rows,'goles'); $('tA').textContent = sum(rows,'asis'); $('tR').innerHTML = record(rows);
+    $('mP').textContent = ms.length; $('mM').textContent = sum(ms,'min'); $('mG').textContent = sum(ms,'goles'); $('mA').textContent = sum(ms,'asis'); $('mR').innerHTML = record(ms) + avgNota(ms);
+    $('tP').textContent = rows.length; $('tM').textContent = sum(rows,'min'); $('tG').textContent = sum(rows,'goles'); $('tA').textContent = sum(rows,'asis'); $('tR').innerHTML = record(rows) + avgNota(rows);
+    const since = rows.filter(r=>r.fecha >= SINCE), n = since.length, rated = since.filter(r=>r.nota>0);
+    const f = (v,d) => n ? (v/n).toFixed(d).replace('.',',') : '–';
+    $('sP').textContent = `${n} partido${n===1?'':'s'}`;
+    $('sN').textContent = rated.length ? (rated.reduce((t,r)=>t+r.nota,0)/rated.length).toFixed(1).replace('.',',') : '–';
+    $('sM').textContent = f(sum(since,'min'),0); $('sG').textContent = f(sum(since,'goles'),2); $('sA').textContent = f(sum(since,'asis'),2);
+    $('sR').innerHTML = record(since);
     const list = $('matchList');
     if(!ms.length){ list.innerHTML = '<div class="empty-msg">Sin partidos este mes.</div>'; return; }
     list.innerHTML = ms.map(r => `
       <div class="match ${r.fecha===entryKey?'sel':''}">
-        <div class="m-top"><div class="m-n">Partido N° ${r.n}${RES[r.res]?`<span class="badge ${r.res}">${RES[r.res]}</span>`:""}</div><div class="m-date">${fullDate(r.fecha)}</div></div>
+        <div class="m-top"><div class="m-n">Partido N° ${r.n}${RES[r.res]?`<span class="badge ${r.res}">${RES[r.res]}</span>`:""}${r.nota?`<span class="badge N">⭐ ${r.nota}/10</span>`:""}</div><div class="m-date">${fullDate(r.fecha)}</div></div>
         <div class="m-desc"></div>
         <div class="m-stats">⏱ <b>${r.min}′</b> · ⚽ <b>${r.goles}</b> goles · 🅰️ <b>${r.asis}</b> asist.</div>
         <div class="m-act">
@@ -269,13 +298,13 @@
   function renderAll(){ renderCalendar(); renderList(); }
 
   function resetForm(){
-    editId = null; $('desc').value=''; $('min').value=50; $('goles').value=0; $('asis').value=0; setRes('');
+    editId = null; $('desc').value=''; $('min').value=50; $('goles').value=0; $('asis').value=0; setRes(''); setNota(0);
     $('btnSave').textContent='⚽ Registrar partido'; $('btnCancel').hidden = true;
   }
 
   async function save(){
     const data = { fecha: entryKey, desc: $('desc').value.trim() || 'Partido',
-      min: Math.max(0, +$('min').value||0), goles: Math.max(0, +$('goles').value||0), asis: Math.max(0, +$('asis').value||0), res };
+      min: Math.max(0, +$('min').value||0), goles: Math.max(0, +$('goles').value||0), asis: Math.max(0, +$('asis').value||0), res, nota };
     let r, was = !!editId;
     if(editId){ r = rows.find(x=>x.id===editId); Object.assign(r, data); }
     else { const n = rows.reduce((m,x)=>Math.max(m,x.n),0)+1; r = { id:'p'+pad(n).padStart(5,'0'), n, ts:Date.now(), ...data }; rows.push(r); }
@@ -295,6 +324,7 @@
     $('btnEntryToday').onclick = () => { $('entryDateInput').value = todayKey(); refreshEntry(); const t=new Date(); viewYear=t.getFullYear(); viewMonth=t.getMonth(); renderAll(); };
     document.querySelectorAll('.step .ctl button').forEach(b => b.onclick = () => { const i=$(b.dataset.t); i.value = Math.max(0,(+i.value||0) + +b.dataset.d); });
     $('btnSave').onclick = save;
+    const nr = $('notaRow'); for(let i=1;i<=10;i++){ const b=document.createElement('button'); b.type='button'; b.className='nota-btn'; b.dataset.n=i; b.textContent=i; b.onclick=()=>setNota(nota===i?0:i); nr.appendChild(b); }
     document.querySelectorAll('.res-btn').forEach(b => b.onclick = () => setRes(res===b.dataset.r ? '' : b.dataset.r));
     $('btnCancel').onclick = resetForm;
     $('btnPrevMonth').onclick = () => { viewMonth--; if(viewMonth<0){viewMonth=11;viewYear--;} confirmId=null; renderAll(); };
@@ -304,7 +334,7 @@
     $('matchList').addEventListener('click', async e => {
       const b = e.target.closest('button'); if(!b) return;
       if(b.dataset.e){ const r = rows.find(q=>q.id===b.dataset.e); editId=r.id;
-        $('entryDateInput').value=r.fecha; refreshEntry(); $('desc').value=r.desc; $('min').value=r.min; $('goles').value=r.goles; $('asis').value=r.asis; setRes(r.res||'');
+        $('entryDateInput').value=r.fecha; refreshEntry(); $('desc').value=r.desc; $('min').value=r.min; $('goles').value=r.goles; $('asis').value=r.asis; setRes(r.res||''); setNota(r.nota||0);
         $('btnSave').textContent=`Guardar cambios N° ${r.n}`; $('btnCancel').hidden=false; renderAll(); window.scrollTo({top:0,behavior:'smooth'}); }
       if(b.dataset.x){ const id=b.dataset.x;
         if(confirmId!==id){ confirmId=id; renderList(); return; }
