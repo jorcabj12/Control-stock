@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Mis Partidos</title>
+<style>
+  :root{
+    color-scheme:dark;
+    --bg:#0f1115; --panel:#171a21; --panel2:#1f232c; --border:#2a2f3a;
+    --text:#e8eaed; --muted:#9aa1ac; --accent:#2ecc71; --accent2:#5fe39a;
+    --gold:#f5c542; --blue:#5b8cff; --danger:#e5484d;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--text); padding-bottom:40px;}
+  header{padding:16px 16px 12px; padding-top:calc(16px + env(safe-area-inset-top,0px)); background:linear-gradient(180deg,#1a1d24,#14161b);
+    border-bottom:1px solid var(--border); position:sticky; top:0; z-index:20;}
+  header .head-row{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  header h1{margin:0; font-size:19px; display:flex; align-items:center; gap:8px;}
+  header h1 span.dot{width:9px;height:9px;border-radius:50%;background:var(--accent);display:inline-block;}
+  header p{margin:4px 0 0; color:var(--muted); font-size:12.5px;}
+  header a.navlink{color:var(--muted); font-size:12.5px; text-decoration:none; border:1px solid var(--border); border-radius:8px; padding:6px 10px; white-space:nowrap;}
+  header a.navlink:active{background:var(--panel2);}
+  .sync{color:var(--muted); font-size:11.5px; border:1px solid var(--border); border-radius:8px; padding:5px 9px;}
+  .container{max-width:760px; margin:0 auto; padding:14px;}
+  .card{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:14px; margin-bottom:14px;}
+  .btn{border:none; border-radius:11px; padding:13px 16px; font-size:15px; font-weight:600; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center; gap:8px; transition:transform .05s ease;}
+  .btn:active{transform:scale(0.97);}
+  .btn-primary{background:var(--accent); color:#06210f;}
+  .btn-secondary{background:var(--panel2); color:var(--text); border:1px solid var(--border);}
+  .btn-ghost{background:transparent; color:var(--muted); border:1px solid var(--border);}
+  .btn-sm{padding:8px 12px; font-size:13px; border-radius:9px;}
+  .btn:focus-visible,.icon-btn:focus-visible,input:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  .row{display:flex; gap:8px;}
+
+  .entry-date-label{margin:0 0 10px; font-size:15.5px; font-weight:700;}
+  .entry-date-row{display:flex; gap:8px; margin-bottom:12px;}
+  input[type=date],input[type=text]{flex:1; width:100%; min-width:0; background:var(--panel2); border:1px solid var(--border); color:var(--text);
+    border-radius:10px; padding:10px; font-size:16px; font-family:inherit;}
+  .fld{display:flex; flex-direction:column; gap:5px; font-size:11.5px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.5px; margin-bottom:12px;}
+  .steps{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px;}
+  .step{background:var(--panel2); border:1px solid var(--border); border-radius:12px; padding:8px; text-align:center;}
+  .step .lbl{font-size:11px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.5px;}
+  .step .val{font-size:24px; font-weight:700; font-variant-numeric:tabular-nums; margin:2px 0 6px; background:transparent; border:0; color:var(--text); width:100%; text-align:center; padding:0; font-family:inherit;}
+  .step .ctl{display:flex; gap:6px;}
+  .step .ctl button{flex:1; height:34px; border-radius:9px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:18px; cursor:pointer;}
+  .step .ctl button:active{background:#282d38;}
+  .step.g .val{color:var(--gold);} .step.a .val{color:var(--blue);}
+
+  .month-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
+  .month-nav .month-label{font-size:16px; font-weight:700; text-transform:capitalize;}
+  .icon-btn{width:38px; height:38px; border-radius:10px; border:1px solid var(--border); background:var(--panel2); color:var(--text); font-size:16px; cursor:pointer;}
+  .weekdays,.days-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
+  .weekdays{margin-bottom:6px;}
+  .weekdays div{text-align:center; font-size:11px; color:var(--muted); font-weight:600;}
+  .day-cell{aspect-ratio:1; border-radius:10px; background:var(--panel2); border:1px solid var(--border);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:13px; cursor:pointer; gap:2px;}
+  .day-cell.empty{background:transparent; border:none; cursor:default;}
+  .day-cell.today{border-color:var(--gold);}
+  .day-cell.selected{box-shadow:0 0 0 2px var(--text) inset;}
+  .day-cell .num{font-weight:600;}
+  .day-cell.played{background:rgba(46,204,113,0.18); border-color:rgba(46,204,113,0.5);}
+  .day-cell .icon{font-size:10px; line-height:1; color:var(--accent2); font-weight:700;}
+  .day-cell:active{transform:scale(0.95);}
+  .legend{display:flex; gap:12px; margin-top:12px; font-size:11.5px; color:var(--muted); flex-wrap:wrap;}
+  .legend .sw{display:inline-flex; align-items:center; gap:6px;}
+  .legend .dot2{width:11px; height:11px; border-radius:4px; display:inline-block;}
+
+  .section-title{display:flex; justify-content:space-between; align-items:center; margin:0 0 10px;}
+  .section-title h3{margin:0; font-size:15px;}
+  .totals{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:12px;}
+  .tot{padding:10px 6px; background:var(--panel2); border:1px solid var(--border); border-radius:12px; text-align:center;}
+  .tot .mt-lbl{font-size:11px; color:var(--muted);}
+  .tot .mt-val{font-size:20px; font-weight:700; font-variant-numeric:tabular-nums;}
+  .career .tot{background:rgba(46,204,113,0.08); border-color:rgba(46,204,113,0.35);}
+
+  .match{background:var(--panel2); border:1px solid var(--border); border-radius:12px; padding:12px; margin-bottom:10px;}
+  .match.sel{border-color:var(--accent);}
+  .m-top{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:4px;}
+  .m-n{font-weight:700; font-size:14px; color:var(--accent2);}
+  .m-date{font-size:12.5px; color:var(--muted);}
+  .m-desc{font-size:14.5px; margin-bottom:6px; overflow-wrap:anywhere;}
+  .m-stats{font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums;}
+  .m-stats b{color:var(--text);}
+  .m-act{display:flex; gap:6px; margin-top:8px;}
+  .del.confirm{color:var(--danger); border-color:rgba(229,72,77,.6);}
+  .empty-msg{color:var(--muted); font-size:13px; text-align:center; padding:12px;}
+  .footer-actions{display:flex; gap:10px; flex-wrap:wrap;}
+  .footer-actions > *{flex:1;}
+  .toast{position:fixed; left:50%; bottom:calc(18px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); background:var(--text); color:var(--bg);
+    padding:9px 15px; border-radius:99px; font-size:13.5px; font-weight:600; z-index:50;}
+  [hidden]{display:none!important;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-row">
+    <h1><span class="dot"></span> Mis Partidos</h1>
+    <div class="row" style="align-items:center">
+      <span class="sync" id="sync">Local</span>
+      <a class="navlink" href="turnos.html">Turnos →</a>
+    </div>
+  </div>
+  <p>Registrá los partidos que jugaste y llevá la cuenta de minutos, goles y asistencias</p>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <h3 class="entry-date-label" id="entryDateLabel">Hoy</h3>
+    <div class="entry-date-row">
+      <input type="date" id="entryDateInput">
+      <button class="btn btn-ghost btn-sm" id="btnEntryToday">Hoy</button>
+    </div>
+    <label class="fld">Descripción<input type="text" id="desc" maxlength="120" placeholder="Ej: F5 con los del laburo"></label>
+    <div class="steps">
+      <div class="step"><div class="lbl">Minutos</div><input class="val" id="min" type="number" inputmode="numeric" min="0" value="50"><div class="ctl"><button data-t="min" data-d="-5">−</button><button data-t="min" data-d="5">+</button></div></div>
+      <div class="step g"><div class="lbl">Goles</div><input class="val" id="goles" type="number" inputmode="numeric" min="0" value="0"><div class="ctl"><button data-t="goles" data-d="-1">−</button><button data-t="goles" data-d="1">+</button></div></div>
+      <div class="step a"><div class="lbl">Asist.</div><input class="val" id="asis" type="number" inputmode="numeric" min="0" value="0"><div class="ctl"><button data-t="asis" data-d="-1">−</button><button data-t="asis" data-d="1">+</button></div></div>
+    </div>
+    <div class="row">
+      <button class="btn btn-primary" id="btnSave" style="flex:1;">⚽ Registrar partido</button>
+      <button class="btn btn-ghost" id="btnCancel" hidden>Cancelar</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="month-nav">
+      <button class="icon-btn" id="btnPrevMonth" aria-label="Mes anterior">‹</button>
+      <div class="month-label" id="monthLabel"></div>
+      <div class="row">
+        <button class="btn btn-ghost btn-sm" id="btnToday">Hoy</button>
+        <button class="icon-btn" id="btnNextMonth" aria-label="Mes siguiente">›</button>
+      </div>
+    </div>
+    <div class="weekdays"><div>L</div><div>M</div><div>M</div><div>J</div><div>V</div><div>S</div><div>D</div></div>
+    <div class="days-grid" id="daysGrid"></div>
+    <div class="legend">
+      <span class="sw"><span class="dot2" style="background:var(--panel2);border:1px solid var(--border)"></span> Sin partido</span>
+      <span class="sw"><span class="dot2" style="background:var(--accent)"></span> Jugué (#N° de partido)</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title"><h3>Partidos de <span id="listMonthLabel"></span></h3></div>
+    <div class="totals">
+      <div class="tot"><div class="mt-lbl">Partidos</div><div class="mt-val" id="mP">0</div></div>
+      <div class="tot"><div class="mt-lbl">Minutos</div><div class="mt-val" id="mM">0</div></div>
+      <div class="tot"><div class="mt-lbl">Goles</div><div class="mt-val" id="mG">0</div></div>
+      <div class="tot"><div class="mt-lbl">Asist.</div><div class="mt-val" id="mA">0</div></div>
+    </div>
+    <div id="matchList"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title"><h3>Total acumulado</h3></div>
+    <div class="totals career">
+      <div class="tot"><div class="mt-lbl">Partidos</div><div class="mt-val" id="tP">0</div></div>
+      <div class="tot"><div class="mt-lbl">Minutos</div><div class="mt-val" id="tM">0</div></div>
+      <div class="tot"><div class="mt-lbl">Goles</div><div class="mt-val" id="tG">0</div></div>
+      <div class="tot"><div class="mt-lbl">Asist.</div><div class="mt-val" id="tA">0</div></div>
+    </div>
+    <div class="footer-actions">
+      <button class="btn btn-secondary btn-sm" id="btnExport">Exportar copia</button>
+      <label class="btn btn-secondary btn-sm">Importar copia<input type="file" id="imp" accept=".json" hidden></label>
+    </div>
+  </div>
+
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const LS = "mispartidos.v1";
+  const MONTH_NAMES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  const DAY_NAMES = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+  let rows = [], db = null, editId = null, confirmId = null, viewYear, viewMonth, entryKey;
+
+  const pad = n => String(n).padStart(2,'0');
+  const dateKey = (y,m,d) => `${y}-${pad(m+1)}-${pad(d)}`;
+  const todayKey = () => { const t = new Date(); return dateKey(t.getFullYear(), t.getMonth(), t.getDate()); };
+  function fullDate(key){ const [y,m,d] = key.split('-').map(Number); const dt = new Date(y,m-1,d);
+    const s = `${DAY_NAMES[dt.getDay()]} ${d} de ${MONTH_NAMES[m-1]} de ${y}`; return s.charAt(0).toUpperCase()+s.slice(1); }
+  function toast(t){ const e=$('toast'); e.textContent=t; e.hidden=false; clearTimeout(e._t); e._t=setTimeout(()=>e.hidden=true,1800); }
+  function lsLoad(){ try{ return JSON.parse(localStorage.getItem(LS)||"[]"); }catch(e){ return []; } }
+  function lsSave(){ try{ localStorage.setItem(LS, JSON.stringify(rows)); }catch(e){} }
+  const sum = (arr,k) => arr.reduce((t,r)=>t+(+r[k]||0),0);
+
+  function refreshEntry(){
+    entryKey = $('entryDateInput').value || todayKey();
+    $('entryDateLabel').textContent = (entryKey === todayKey() ? 'Hoy, ' : '') + fullDate(entryKey);
+  }
+
+  function renderCalendar(){
+    $('monthLabel').textContent = `${MONTH_NAMES[viewMonth]} ${viewYear}`;
+    const grid = $('daysGrid'); grid.innerHTML = '';
+    const startOffset = (new Date(viewYear, viewMonth, 1).getDay() + 6) % 7;
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const tKey = todayKey();
+    for(let i=0;i<startOffset;i++){ const el=document.createElement('div'); el.className='day-cell empty'; grid.appendChild(el); }
+    for(let d=1; d<=daysInMonth; d++){
+      const key = dateKey(viewYear, viewMonth, d);
+      const ms = rows.filter(r=>r.fecha===key).sort((a,b)=>a.n-b.n);
+      let cls = 'day-cell';
+      if(ms.length) cls += ' played';
+      if(key === tKey) cls += ' today';
+      if(key === entryKey) cls += ' selected';
+      const el = document.createElement('div');
+      el.className = cls;
+      el.innerHTML = `<div class="num">${d}</div><div class="icon">${ms.map(m=>'#'+m.n).join(' ')}</div>`;
+      el.addEventListener('click', () => { $('entryDateInput').value = key; refreshEntry(); renderAll(); });
+      grid.appendChild(el);
+    }
+  }
+
+  function renderList(){
+    const prefix = `${viewYear}-${pad(viewMonth+1)}-`;
+    const ms = rows.filter(r=>r.fecha.startsWith(prefix)).sort((a,b)=>b.fecha.localeCompare(a.fecha)||b.n-a.n);
+    $('listMonthLabel').textContent = `${MONTH_NAMES[viewMonth]} ${viewYear}`;
+    $('mP').textContent = ms.length; $('mM').textContent = sum(ms,'min'); $('mG').textContent = sum(ms,'goles'); $('mA').textContent = sum(ms,'asis');
+    $('tP').textContent = rows.length; $('tM').textContent = sum(rows,'min'); $('tG').textContent = sum(rows,'goles'); $('tA').textContent = sum(rows,'asis');
+    const list = $('matchList');
+    if(!ms.length){ list.innerHTML = '<div class="empty-msg">Sin partidos este mes.</div>'; return; }
+    list.innerHTML = ms.map(r => `
+      <div class="match ${r.fecha===entryKey?'sel':''}">
+        <div class="m-top"><div class="m-n">Partido N° ${r.n}</div><div class="m-date">${fullDate(r.fecha)}</div></div>
+        <div class="m-desc"></div>
+        <div class="m-stats">⏱ <b>${r.min}′</b> · ⚽ <b>${r.goles}</b> goles · 🅰️ <b>${r.asis}</b> asist.</div>
+        <div class="m-act">
+          <button class="btn btn-ghost btn-sm" data-e="${r.id}">Editar</button>
+          <button class="btn btn-ghost btn-sm del ${confirmId===r.id?'confirm':''}" data-x="${r.id}">${confirmId===r.id?'¿Borrar? Tocá de nuevo':'Borrar'}</button>
+        </div>
+      </div>`).join('');
+    list.querySelectorAll('.m-desc').forEach((el,i)=> el.textContent = ms[i].desc);
+  }
+
+  function renderAll(){ renderCalendar(); renderList(); }
+
+  function resetForm(){
+    editId = null; $('desc').value=''; $('min').value=50; $('goles').value=0; $('asis').value=0;
+    $('btnSave').textContent='⚽ Registrar partido'; $('btnCancel').hidden = true;
+  }
+
+  async function save(){
+    const data = { fecha: entryKey, desc: $('desc').value.trim() || 'Partido',
+      min: Math.max(0, +$('min').value||0), goles: Math.max(0, +$('goles').value||0), asis: Math.max(0, +$('asis').value||0) };
+    let r, was = !!editId;
+    if(editId){ r = rows.find(x=>x.id===editId); Object.assign(r, data); }
+    else { const n = rows.reduce((m,x)=>Math.max(m,x.n),0)+1; r = { id:'p'+pad(n).padStart(5,'0'), n, ts:Date.now(), ...data }; rows.push(r); }
+    const [y,m] = entryKey.split('-').map(Number); viewYear=y; viewMonth=m-1;
+    resetForm(); lsSave(); renderAll();
+    const msg = was ? 'Partido actualizado' : `Partido N° ${r.n} registrado`;
+    if(db){ try{ await db.collection('partidos').doc(r.id).set(r); toast(msg); }catch(e){ toast('Guardado solo en este dispositivo'); } }
+    else toast(msg);
+  }
+
+  function init(){
+    rows = lsLoad();
+    $('entryDateInput').value = todayKey(); refreshEntry();
+    const t = new Date(); viewYear = t.getFullYear(); viewMonth = t.getMonth();
+
+    $('entryDateInput').addEventListener('change', () => { refreshEntry(); const [y,m]=entryKey.split('-').map(Number); viewYear=y; viewMonth=m-1; renderAll(); });
+    $('btnEntryToday').onclick = () => { $('entryDateInput').value = todayKey(); refreshEntry(); const t=new Date(); viewYear=t.getFullYear(); viewMonth=t.getMonth(); renderAll(); };
+    document.querySelectorAll('.step .ctl button').forEach(b => b.onclick = () => { const i=$(b.dataset.t); i.value = Math.max(0,(+i.value||0) + +b.dataset.d); });
+    $('btnSave').onclick = save;
+    $('btnCancel').onclick = resetForm;
+    $('btnPrevMonth').onclick = () => { viewMonth--; if(viewMonth<0){viewMonth=11;viewYear--;} confirmId=null; renderAll(); };
+    $('btnNextMonth').onclick = () => { viewMonth++; if(viewMonth>11){viewMonth=0;viewYear++;} confirmId=null; renderAll(); };
+    $('btnToday').onclick = () => { const t=new Date(); viewYear=t.getFullYear(); viewMonth=t.getMonth(); renderAll(); };
+
+    $('matchList').addEventListener('click', async e => {
+      const b = e.target.closest('button'); if(!b) return;
+      if(b.dataset.e){ const r = rows.find(q=>q.id===b.dataset.e); editId=r.id;
+        $('entryDateInput').value=r.fecha; refreshEntry(); $('desc').value=r.desc; $('min').value=r.min; $('goles').value=r.goles; $('asis').value=r.asis;
+        $('btnSave').textContent=`Guardar cambios N° ${r.n}`; $('btnCancel').hidden=false; renderAll(); window.scrollTo({top:0,behavior:'smooth'}); }
+      if(b.dataset.x){ const id=b.dataset.x;
+        if(confirmId!==id){ confirmId=id; renderList(); return; }
+        confirmId=null; rows = rows.filter(q=>q.id!==id); lsSave(); renderAll(); toast('Partido borrado');
+        if(db){ try{ await db.collection('partidos').doc(id).delete(); }catch(err){} } }
+    });
+
+    $('btnExport').onclick = async () => {
+      const name = `partidos-${todayKey()}.json`, json = JSON.stringify(rows);
+      const dl = window.claude?.use ? await window.claude.use('downloads') : null;
+      if(dl){ try{ await dl.save({filename:name, data:json}); }catch(e){} return; }
+      const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([json],{type:'application/json'})); a.download=name; a.click();
+    };
+    $('imp').onchange = e => { const f=e.target.files[0]; if(!f) return;
+      f.text().then(async t => { try{ const d=JSON.parse(t); if(!Array.isArray(d)) throw 0; rows=d; lsSave(); renderAll(); toast('Copia importada');
+        if(db){ for(const r of d){ try{ await db.collection('partidos').doc(r.id).set(r); }catch(err){} } } }catch(err){ toast('Archivo inválido'); } }); };
+
+    renderAll();
+
+    (async () => {
+      db = window.claude?.use ? await window.claude.use('db') : null;
+      if(!db){ $('sync').textContent = 'Guardado local'; return; }
+      $('sync').textContent = 'Sincronizado';
+      db.collection('partidos').onSnapshot(snap => { rows = snap.docs.map(d=>({id:d.id, ...d.data()})); lsSave(); renderAll(); },
+        () => { $('sync').textContent = 'Sin conexión'; });
+    })();
+  }
+  init();
+})();
+</script>
+</body>
+</html>
