@@ -5,135 +5,167 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Mis Partidos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
   :root{
-    color-scheme:dark;
-    --bg:#0f1115; --panel:#171a21; --panel2:#1f232c; --border:#2a2f3a;
-    --text:#e8eaed; --muted:#9aa1ac; --accent:#2ecc71; --accent2:#5fe39a;
-    --gold:#f5c542; --blue:#5b8cff; --danger:#e5484d;
+    --bg:#e9edf1; --panel:#fbfcfd; --panel2:#eef2f5; --border:#c9d2db; --rule:#dde4ea;
+    --text:#14213a; --muted:#5f6d80; --ink:#14213a;
+    --accent:#1d8a4e; --accent2:#1d8a4e; --gold:#c98a00; --blue:#2350c8; --danger:#d23a2c;
+    --win-bg:#dff1e6; --draw-bg:#fbf0cc; --loss-bg:#fbe1dd;
+    --display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+    --body:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
   }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
+    --bg:#0c1322; --panel:#131c2e; --panel2:#1a2439; --border:#2b3953; --rule:#222e45;
+    --text:#e4e9f2; --muted:#8e9ab0; --ink:#e4e9f2;
+    --accent:#3fc07a; --accent2:#3fc07a; --gold:#f0b429; --blue:#7c9cff; --danger:#ff6b5e;
+    --win-bg:rgba(63,192,122,.16); --draw-bg:rgba(240,180,41,.16); --loss-bg:rgba(255,107,94,.16);}}
+  :root[data-theme="dark"]{color-scheme:dark;
+    --bg:#0c1322; --panel:#131c2e; --panel2:#1a2439; --border:#2b3953; --rule:#222e45;
+    --text:#e4e9f2; --muted:#8e9ab0; --ink:#e4e9f2;
+    --accent:#3fc07a; --accent2:#3fc07a; --gold:#f0b429; --blue:#7c9cff; --danger:#ff6b5e;
+    --win-bg:rgba(63,192,122,.16); --draw-bg:rgba(240,180,41,.16); --loss-bg:rgba(255,107,94,.16);}
   *{box-sizing:border-box;}
-  body{margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    background:var(--bg); color:var(--text); padding-bottom:40px;}
-  header{padding:16px 16px 12px; padding-top:calc(16px + env(safe-area-inset-top,0px)); background:linear-gradient(180deg,#1a1d24,#14161b);
-    border-bottom:1px solid var(--border); position:sticky; top:0; z-index:20;}
-  header .head-row{display:flex; align-items:center; justify-content:space-between; gap:8px;}
-  header h1{margin:0; font-size:19px; display:flex; align-items:center; gap:8px;}
-  header h1 span.dot{width:9px;height:9px;border-radius:50%;background:var(--accent);display:inline-block;}
-  header p{margin:4px 0 0; color:var(--muted); font-size:12.5px;}
-  header a.navlink{color:var(--muted); font-size:12.5px; text-decoration:none; border:1px solid var(--border); border-radius:8px; padding:6px 10px; white-space:nowrap;}
-  header a.navlink:active{background:var(--panel2);}
-  .sync{color:var(--muted); font-size:11.5px; border:1px solid var(--border); border-radius:8px; padding:5px 9px;}
-  .container{max-width:760px; margin:0 auto; padding:14px;}
-  .card{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:14px; margin-bottom:14px;}
-  .btn{border:none; border-radius:11px; padding:13px 16px; font-size:15px; font-weight:600; cursor:pointer;
-    display:inline-flex; align-items:center; justify-content:center; gap:8px; transition:transform .05s ease;}
-  .btn:active{transform:scale(0.97);}
-  .btn-primary{background:var(--accent); color:#06210f;}
-  .btn-secondary{background:var(--panel2); color:var(--text); border:1px solid var(--border);}
-  .btn-ghost{background:transparent; color:var(--muted); border:1px solid var(--border);}
-  .btn-sm{padding:8px 12px; font-size:13px; border-radius:9px;}
-  .btn:focus-visible,.icon-btn:focus-visible,input:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  body{margin:0; font-family:var(--body); font-size:15px; background:var(--bg); color:var(--text); padding-bottom:40px;}
+  [hidden]{display:none!important;}
+
+  header{position:sticky; top:0; z-index:20; background:var(--ink); color:var(--bg);
+    padding:12px 16px 12px; padding-top:calc(12px + env(safe-area-inset-top,0px));}
+  header .head-row{max-width:760px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .eyebrow{font:600 10.5px var(--mono); letter-spacing:2px; text-transform:uppercase; opacity:.7;}
+  header h1{margin:0; font:900 30px/0.95 var(--display); letter-spacing:.5px; text-transform:uppercase;}
+  header h1 .dot{display:none;}
+  header p{display:none;}
+  .hpj{font:900 40px/0.9 var(--display); font-variant-numeric:tabular-nums; text-align:right;}
+  .hpj small{display:block; font:600 9.5px var(--mono); letter-spacing:1.5px; opacity:.7;}
+  .sync{font:500 10px var(--mono); letter-spacing:.8px; text-transform:uppercase; opacity:.65;}
+  header a.navlink{color:var(--bg); font:700 12px var(--body); letter-spacing:1px; text-transform:uppercase; text-decoration:none; border:1.5px solid currentColor; border-radius:4px; padding:5px 8px; white-space:nowrap; opacity:.85;}
+  .hmeta{display:flex; flex-direction:column; align-items:flex-end; gap:6px;}
+
+  .container{max-width:760px; margin:0 auto; padding:14px 16px;}
+  .card{background:var(--panel); border:1.5px solid var(--border); border-radius:4px; padding:14px; margin-bottom:14px; position:relative;}
+  .card::before{content:""; position:absolute; left:-1.5px; right:-1.5px; top:-1.5px; height:4px; background:var(--ink); border-radius:4px 4px 0 0;}
+  .section-title{display:flex; justify-content:space-between; align-items:baseline; margin:2px 0 12px; gap:8px;}
+  .section-title h3{margin:0; font:800 21px/1 var(--display); text-transform:uppercase; letter-spacing:.6px; text-wrap:balance;}
+
+  .btn{border:none; border-radius:4px; padding:13px 16px; font:700 15px var(--body); letter-spacing:1px; text-transform:uppercase; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:8px;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:var(--accent); color:#fff; box-shadow:0 3px 0 color-mix(in srgb,var(--accent) 60%,#000);}
+  .btn-secondary{background:var(--panel2); color:var(--text); border:1.5px solid var(--border);}
+  .btn-ghost{background:transparent; color:var(--muted); border:1.5px solid var(--border);}
+  .btn-sm{padding:7px 11px; font-size:12px;}
+  .btn:focus-visible,.icon-btn:focus-visible,input:focus-visible,.res-btn:focus-visible,.mod-btn:focus-visible,.nota-btn:focus-visible{outline:2px solid var(--blue); outline-offset:2px;}
   .row{display:flex; gap:8px;}
 
-  .entry-date-label{margin:0 0 10px; font-size:15.5px; font-weight:700;}
+  .entry-date-label{margin:2px 0 10px; font:800 22px/1.05 var(--display); text-transform:uppercase; letter-spacing:.4px;}
   .entry-date-row{display:flex; gap:8px; margin-bottom:12px;}
-  input[type=date],input[type=text]{flex:1; width:100%; min-width:0; background:var(--panel2); border:1px solid var(--border); color:var(--text);
-    border-radius:10px; padding:10px; font-size:16px; font-family:inherit;}
-  .fld{display:flex; flex-direction:column; gap:5px; font-size:11.5px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.5px; margin-bottom:12px;}
-  .steps{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px;}
-  .step{background:var(--panel2); border:1px solid var(--border); border-radius:12px; padding:8px; text-align:center;}
-  .step .lbl{font-size:11px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.5px;}
-  .step .val{font-size:24px; font-weight:700; font-variant-numeric:tabular-nums; margin:2px 0 6px; background:transparent; border:0; color:var(--text); width:100%; text-align:center; padding:0; font-family:inherit;}
-  .step .ctl{display:flex; gap:6px;}
-  .step .ctl button{flex:1; height:34px; border-radius:9px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:18px; cursor:pointer;}
-  .step .ctl button:active{background:#282d38;}
+  input[type=date],input[type=text]{flex:1; width:100%; min-width:0; background:transparent; border:0; border-bottom:1.5px solid var(--border); color:var(--text);
+    border-radius:0; padding:8px 2px; font:500 17px var(--body);}
+  input[type=text]:focus{border-bottom-color:var(--ink); outline:none;}
+  .fld,.nota-lbl{display:flex; flex-direction:column; gap:2px; font:600 10.5px var(--mono); color:var(--muted); text-transform:uppercase; letter-spacing:1.4px; margin-bottom:12px;}
+  .nota-lbl{display:block; margin-bottom:6px;}
+
+  .steps{display:grid; grid-template-columns:repeat(3,1fr); border:1.5px solid var(--border); border-radius:4px; margin-bottom:12px;}
+  .step{padding:8px 6px; text-align:center; border-left:1.5px solid var(--border);}
+  .step:first-child{border-left:0;}
+  .step .lbl{font:600 10px var(--mono); color:var(--muted); text-transform:uppercase; letter-spacing:1.2px;}
+  .step .val{font:900 40px/1 var(--display); font-variant-numeric:tabular-nums; margin:4px 0 6px; background:transparent; border:0; color:var(--text); width:100%; text-align:center; padding:0;}
+  .step .ctl{display:flex; gap:4px;}
+  .step .ctl button{flex:1; height:34px; border-radius:3px; border:1.5px solid var(--border); background:var(--panel2); color:var(--text); font:600 18px var(--body); cursor:pointer;}
   .step.g .val{color:var(--gold);} .step.a .val{color:var(--blue);}
 
-  .month-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
-  .month-nav .month-label{font-size:16px; font-weight:700; text-transform:capitalize;}
-  .icon-btn{width:38px; height:38px; border-radius:10px; border:1px solid var(--border); background:var(--panel2); color:var(--text); font-size:16px; cursor:pointer;}
-  .weekdays,.days-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
-  .weekdays{margin-bottom:6px;}
-  .weekdays div{text-align:center; font-size:11px; color:var(--muted); font-weight:600;}
-  .day-cell{aspect-ratio:1; border-radius:10px; background:var(--panel2); border:1px solid var(--border);
-    display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:13px; cursor:pointer; gap:2px;}
-  .day-cell.empty{background:transparent; border:none; cursor:default;}
-  .day-cell.today{border-color:var(--gold);}
-  .day-cell.selected{box-shadow:0 0 0 2px var(--text) inset;}
-  .day-cell .num{font-weight:600;}
-  .day-cell.played{background:rgba(46,204,113,0.18); border-color:rgba(46,204,113,0.5);}
-  .day-cell .icon{font-size:10px; line-height:1; color:var(--accent2); font-weight:700;}
-  .day-cell:active{transform:scale(0.95);}
-  .legend{display:flex; gap:12px; margin-top:12px; font-size:11.5px; color:var(--muted); flex-wrap:wrap;}
-  .legend .sw{display:inline-flex; align-items:center; gap:6px;}
-  .legend .dot2{width:11px; height:11px; border-radius:4px; display:inline-block;}
+  .res-row{display:grid; grid-template-columns:repeat(3,1fr); gap:0; margin-bottom:12px; border:1.5px solid var(--border); border-radius:4px; overflow:hidden;}
+  .res-btn,.mod-btn{border:0; border-left:1.5px solid var(--border); border-radius:0; padding:12px 4px; font:700 13.5px var(--body); letter-spacing:1px; text-transform:uppercase; cursor:pointer; background:var(--panel); color:var(--muted);}
+  .res-row > :first-child{border-left:0;}
+  .res-btn.V.active{background:var(--accent); color:#fff;}
+  .res-btn.E.active{background:var(--gold); color:#fff;}
+  .res-btn.D.active{background:var(--danger); color:#fff;}
+  .mod-btn.active{background:var(--ink); color:var(--bg);}
 
-  .section-title{display:flex; justify-content:space-between; align-items:center; margin:0 0 10px;}
-  .section-title h3{margin:0; font-size:15px;}
-  .totals{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:12px;}
-  .tot{padding:10px 6px; background:var(--panel2); border:1px solid var(--border); border-radius:12px; text-align:center;}
-  .tot .mt-lbl{font-size:11px; color:var(--muted);}
-  .tot .mt-val{font-size:20px; font-weight:700; font-variant-numeric:tabular-nums;}
-  .career .tot{background:rgba(46,204,113,0.08); border-color:rgba(46,204,113,0.35);}
-
-  .match{background:var(--panel2); border:1px solid var(--border); border-radius:12px; padding:12px; margin-bottom:10px;}
-  .match.sel{border-color:var(--accent);}
-  .m-top{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:4px;}
-  .m-n{font-weight:700; font-size:14px; color:var(--accent2);}
-  .m-date{font-size:12.5px; color:var(--muted);}
-  .m-desc{font-size:14.5px; margin-bottom:6px; overflow-wrap:anywhere;}
-  .m-stats{font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums;}
-  .m-stats b{color:var(--text);}
-  .m-act{display:flex; gap:6px; margin-top:8px;}
-  .res-row{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px;}
-  .res-btn{border-radius:12px; padding:13px 6px; font-size:14.5px; font-weight:700; cursor:pointer; border:1px solid var(--border); background:var(--panel2); color:var(--muted); font-family:inherit;}
-  .res-btn:active{transform:scale(0.97);}
-  .res-btn.V.active{background:rgba(46,204,113,0.18); border-color:var(--accent); color:var(--accent2);}
-  .res-btn.E.active{background:rgba(245,197,66,0.16); border-color:var(--gold); color:var(--gold);}
-  .res-btn.D.active{background:rgba(229,72,77,0.16); border-color:var(--danger); color:#ff7b7f;}
-  .badge{font-size:11.5px; font-weight:700; border-radius:99px; padding:2px 8px; margin-left:6px;}
-  .badge.V{background:rgba(46,204,113,0.18); color:var(--accent2);}
-  .badge.E{background:rgba(245,197,66,0.16); color:var(--gold);}
-  .badge.D{background:rgba(229,72,77,0.16); color:#ff7b7f;}
-  .record{font-size:13px; color:var(--muted); margin:-4px 0 12px; font-variant-numeric:tabular-nums;}
-  .record b.V{color:var(--accent2);} .record b.E{color:var(--gold);} .record b.D{color:#ff7b7f;}
-  .day-cell.rE{background:rgba(245,197,66,0.16); border-color:rgba(245,197,66,0.5);}
-  .day-cell.rD{background:rgba(229,72,77,0.16); border-color:rgba(229,72,77,0.5);}
-  .nota-lbl{font-size:11.5px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px;}
-  .nota-row{display:grid; grid-template-columns:repeat(10,1fr); gap:4px; margin-bottom:12px;}
-  .nota-btn{aspect-ratio:1; max-width:100%; border-radius:9px; border:1px solid var(--border); background:var(--panel2); color:var(--muted); font-size:14px; font-weight:700; cursor:pointer; padding:0; font-family:inherit; font-variant-numeric:tabular-nums;}
-  .nota-btn.on{background:rgba(91,140,255,0.2); border-color:var(--blue); color:#9db8ff;}
+  .nota-row{display:grid; grid-template-columns:repeat(10,1fr); gap:3px; margin-bottom:14px;}
+  .nota-btn{height:38px; border-radius:3px; border:1.5px solid var(--border); background:var(--panel); color:var(--muted); font:800 18px var(--display); cursor:pointer; padding:0; font-variant-numeric:tabular-nums;}
+  .nota-btn.on{background:color-mix(in srgb,var(--blue) 18%,transparent); border-color:color-mix(in srgb,var(--blue) 45%,transparent); color:var(--blue);}
   .nota-btn.sel{background:var(--blue); border-color:var(--blue); color:#fff;}
-  .badge.N{background:rgba(91,140,255,0.18); color:#9db8ff;}
+
+  .month-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
+  .month-nav .month-label{font:800 22px var(--display); text-transform:uppercase; letter-spacing:.5px;}
+  .icon-btn{width:38px; height:38px; border-radius:4px; border:1.5px solid var(--border); background:var(--panel); color:var(--text); font-size:18px; cursor:pointer;}
+  .weekdays,.days-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:3px;}
+  .weekdays{margin-bottom:4px;}
+  .weekdays div{text-align:center; font:600 10px var(--mono); color:var(--muted); letter-spacing:1px;}
+  .day-cell{aspect-ratio:1; border-radius:3px; background:var(--panel2); border:1.5px solid transparent; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; gap:1px;}
+  .day-cell.empty{background:transparent; cursor:default;}
+  .day-cell .num{font:700 15px var(--display);}
+  .day-cell .icon{font:600 9px var(--mono); line-height:1;}
+  .day-cell.played{background:var(--ink); color:var(--bg);}
+  .day-cell.rV{background:var(--accent); color:#fff;}
+  .day-cell.rE{background:var(--gold); color:#fff;}
+  .day-cell.rD{background:var(--danger); color:#fff;}
+  .day-cell.today{border-color:var(--blue);}
+  .day-cell.selected{box-shadow:0 0 0 2px var(--panel), 0 0 0 4px var(--ink);}
+  .legend{display:flex; gap:12px; margin-top:12px; font:500 10.5px var(--mono); color:var(--muted); flex-wrap:wrap; text-transform:uppercase; letter-spacing:.8px;}
+  .legend .sw{display:inline-flex; align-items:center; gap:5px;}
+  .legend .dot2{width:10px; height:10px; border-radius:2px; display:inline-block;}
+
+  .totals{display:grid; grid-template-columns:repeat(4,1fr); border:1.5px solid var(--border); border-radius:4px; margin-bottom:10px;}
+  .tot{padding:8px 4px; text-align:center; border-left:1.5px solid var(--border);}
+  .tot:first-child{border-left:0;}
+  .tot .mt-lbl{font:600 9.5px var(--mono); color:var(--muted); text-transform:uppercase; letter-spacing:1.1px;}
+  .tot .mt-val{font:900 30px/1.05 var(--display); font-variant-numeric:tabular-nums;}
+  .career .tot .mt-val{color:var(--text);}
+  .record{font-size:13.5px; color:var(--muted); margin:0 0 12px; font-variant-numeric:tabular-nums;}
+  .record b{font:800 17px var(--display);}
+  .record b.V{color:var(--accent);} .record b.E{color:var(--gold);} .record b.D{color:var(--danger);}
+
+  .match{border-top:1.5px dashed var(--rule);}
+  .match:first-child{border-top:0;}
+  .match summary{list-style:none; display:grid; grid-template-columns:44px 1fr auto 16px; align-items:center; gap:10px; padding:10px 0; cursor:pointer;}
+  .match summary::-webkit-details-marker{display:none;}
+  .match.sel summary{background:linear-gradient(90deg,color-mix(in srgb,var(--blue) 10%,transparent),transparent);}
+  .chev{width:9px; height:9px; border-right:2px solid var(--muted); border-bottom:2px solid var(--muted); transform:rotate(45deg); margin-top:-4px; transition:transform .15s;}
+  .match[open] .chev{transform:rotate(-135deg); margin-top:4px;}
+  .m-n{font:900 32px/0.9 var(--display); color:var(--text); font-variant-numeric:tabular-nums;}
+  .m-mid{min-width:0;}
+  .m-body{padding:0 0 12px 54px;}
+  .m-res{font:900 18px/1 var(--display); width:28px; height:28px; display:grid; place-items:center; border-radius:3px; color:#fff; background:var(--border);}
+  .m-res.V{background:var(--accent);} .m-res.E{background:var(--gold);} .m-res.D{background:var(--danger);}
+  .m-badges{display:flex; gap:4px; flex-wrap:wrap; margin:0 0 6px;}
+  .m-badges:empty{display:none;}
+  .m-date{font:500 11px var(--mono); color:var(--muted); letter-spacing:.5px; text-transform:uppercase;}
+  .m-team{font:700 12px var(--body); color:var(--accent); letter-spacing:1px; text-transform:uppercase; margin-bottom:6px;}
+  .m-desc{font:800 19px/1.05 var(--display); text-transform:uppercase; overflow-wrap:anywhere; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .m-stats{font:500 12.5px var(--mono); color:var(--muted); font-variant-numeric:tabular-nums;}
+  .m-stats b{color:var(--text);}
+  .m-act{display:flex; gap:6px; margin-top:10px;}
+  .team-sub{display:block; font:600 9.5px var(--mono); letter-spacing:1px; color:var(--muted); text-transform:uppercase; margin-top:2px;}
+  .badge{display:inline-block; font:700 10.5px var(--body); letter-spacing:1px; text-transform:uppercase; border-radius:2px; padding:3px 6px; margin:0;}
+  .badge.V{background:var(--accent); color:#fff;} .badge.E{background:var(--gold); color:#fff;} .badge.D{background:var(--danger); color:#fff;}
+  .badge.N{background:var(--blue); color:#fff;}
+  .badge.M{background:transparent; border:1.5px solid var(--border); color:var(--muted);}
+  .del.confirm{color:var(--danger); border-color:var(--danger);}
+  .empty-msg{color:var(--muted); font:500 12px var(--mono); text-align:center; padding:14px; text-transform:uppercase; letter-spacing:1px;}
+
   .team-wrap{overflow-x:auto;}
-  .team-tbl{width:100%; border-collapse:collapse; font-size:13px; font-variant-numeric:tabular-nums;}
-  .team-tbl th{font-size:10.5px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.4px; text-align:center; padding:6px 4px; border-bottom:1px solid var(--border);}
-  .team-tbl td{text-align:center; padding:9px 4px; border-bottom:1px solid var(--border);}
+  .team-tbl{width:100%; border-collapse:collapse; font-size:14px; font-variant-numeric:tabular-nums;}
+  .team-tbl th{font:600 9.5px var(--mono); color:var(--muted); text-transform:uppercase; letter-spacing:1px; text-align:center; padding:6px 4px; border-bottom:2px solid var(--ink);}
+  .team-tbl td{text-align:center; padding:9px 4px; border-bottom:1px solid var(--rule); font-family:var(--mono); font-size:13px;}
   .team-tbl th:first-child,.team-tbl td:first-child{text-align:left;}
-  .team-tbl td:first-child{font-weight:700; overflow-wrap:anywhere;}
-  .team-tbl tr:last-child td{border-bottom:0;}
-  .m-team{font-size:12px; color:var(--accent2); font-weight:600; margin-bottom:2px;}
-  .mod-btn{border-radius:12px; padding:12px 4px; font-size:13.5px; font-weight:700; cursor:pointer; border:1px solid var(--border); background:var(--panel2); color:var(--muted); font-family:inherit; letter-spacing:.3px;}
-  .mod-btn:active{transform:scale(0.97);}
-  .mod-btn.active{background:var(--text); border-color:var(--text); color:var(--bg);}
-  .badge.M{background:var(--panel); border:1px solid var(--border); color:var(--text);}
-  .del.confirm{color:var(--danger); border-color:rgba(229,72,77,.6);}
-  .empty-msg{color:var(--muted); font-size:13px; text-align:center; padding:12px;}
+  .team-tbl td:first-child{font:800 16px var(--display); text-transform:uppercase; overflow-wrap:anywhere;}
   .footer-actions{display:flex; gap:10px; flex-wrap:wrap;}
   .footer-actions > *{flex:1;}
-  .toast{position:fixed; left:50%; bottom:calc(18px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); background:var(--text); color:var(--bg);
-    padding:9px 15px; border-radius:99px; font-size:13.5px; font-weight:600; z-index:50;}
-  [hidden]{display:none!important;}
+  .toast{position:fixed; left:50%; bottom:calc(18px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); background:var(--ink); color:var(--bg); padding:10px 16px; border-radius:3px; font:700 13px var(--body); letter-spacing:1px; text-transform:uppercase; z-index:50;}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
 </style>
 </head>
 <body>
 
 <header>
   <div class="head-row">
-    <h1><span class="dot"></span> Mis Partidos</h1>
-    <div class="row" style="align-items:center">
-      <span class="sync" id="sync">Local</span>
+    <div><div class="eyebrow">Planilla de juego</div><h1>Mis Partidos</h1><span class="sync" id="sync">Local</span></div>
+    <div class="row" style="align-items:center; gap:12px">
+      <div class="hpj"><small>PJ</small><span id="hPJ">0</span></div>
       <a class="navlink" href="turnos.html">Turnos →</a>
     </div>
   </div>
@@ -161,14 +193,14 @@
       <div class="step a"><div class="lbl">Asist.</div><input class="val" id="asis" type="number" inputmode="numeric" min="0" value="0"><div class="ctl"><button data-t="asis" data-d="-1">−</button><button data-t="asis" data-d="1">+</button></div></div>
     </div>
     <div class="res-row" id="resRow">
-      <button type="button" class="res-btn V" data-r="V">✅ Victoria</button>
-      <button type="button" class="res-btn E" data-r="E">🤝 Empate</button>
-      <button type="button" class="res-btn D" data-r="D">❌ Derrota</button>
+      <button type="button" class="res-btn V" data-r="V">Victoria</button>
+      <button type="button" class="res-btn E" data-r="E">Empate</button>
+      <button type="button" class="res-btn D" data-r="D">Derrota</button>
     </div>
     <div class="nota-lbl">Calificación del partido <span id="notaTxt"></span></div>
     <div class="nota-row" id="notaRow"></div>
     <div class="row">
-      <button class="btn btn-primary" id="btnSave" style="flex:1;">⚽ Registrar partido</button>
+      <button class="btn btn-primary" id="btnSave" style="flex:1;">Registrar partido</button>
       <button class="btn btn-ghost" id="btnCancel" hidden>Cancelar</button>
     </div>
   </div>
@@ -186,7 +218,7 @@
     <div class="days-grid" id="daysGrid"></div>
     <div class="legend">
       <span class="sw"><span class="dot2" style="background:var(--panel2);border:1px solid var(--border)"></span> Sin partido</span>
-      <span class="sw"><span class="dot2" style="background:var(--accent)"></span> Victoria</span><span class="sw"><span class="dot2" style="background:var(--gold)"></span> Empate</span><span class="sw"><span class="dot2" style="background:var(--danger)"></span> Derrota</span><span class="sw">#N° de partido</span>
+      <span class="sw"><span class="dot2" style="background:var(--ink)"></span> Sin resultado</span><span class="sw"><span class="dot2" style="background:var(--accent)"></span> Victoria</span><span class="sw"><span class="dot2" style="background:var(--gold)"></span> Empate</span><span class="sw"><span class="dot2" style="background:var(--danger)"></span> Derrota</span><span class="sw">#N° de partido</span>
     </div>
   </div>
 
@@ -243,7 +275,7 @@
   const LS = "mispartidos.v1";
   const MONTH_NAMES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
   const DAY_NAMES = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
-  let mod = "", nota = 0, res = "", rows = [], db = null, editId = null, confirmId = null, viewYear, viewMonth, entryKey;
+  const openIds = new Set(); let mod = "", nota = 0, res = "", rows = [], db = null, editId = null, confirmId = null, viewYear, viewMonth, entryKey;
 
   const pad = n => String(n).padStart(2,'0');
   const dateKey = (y,m,d) => `${y}-${pad(m+1)}-${pad(d)}`;
@@ -281,7 +313,7 @@
       const key = dateKey(viewYear, viewMonth, d);
       const ms = rows.filter(r=>r.fecha===key).sort((a,b)=>a.n-b.n);
       let cls = 'day-cell';
-      if(ms.length){ cls += ' played'; const last = ms[ms.length-1].res; if(last==='E'||last==='D') cls += ' r'+last; }
+      if(ms.length){ cls += ' played'; const last = ms[ms.length-1].res; if(last) cls += ' r'+last; }
       if(key === tKey) cls += ' today';
       if(key === entryKey) cls += ' selected';
       const el = document.createElement('div');
@@ -297,7 +329,7 @@
     const ms = rows.filter(r=>r.fecha.startsWith(prefix)).sort((a,b)=>b.fecha.localeCompare(a.fecha)||b.n-a.n);
     $('listMonthLabel').textContent = `${MONTH_NAMES[viewMonth]} ${viewYear}`;
     $('mP').textContent = ms.length; $('mM').textContent = sum(ms,'min'); $('mG').textContent = sum(ms,'goles'); $('mA').textContent = sum(ms,'asis'); $('mR').innerHTML = record(ms) + avgNota(ms);
-    $('tP').textContent = rows.length; $('tM').textContent = sum(rows,'min'); $('tG').textContent = sum(rows,'goles'); $('tA').textContent = sum(rows,'asis'); $('tR').innerHTML = record(rows) + avgNota(rows);
+    $('tP').textContent = rows.length; $('hPJ').textContent = rows.length; $('tM').textContent = sum(rows,'min'); $('tG').textContent = sum(rows,'goles'); $('tA').textContent = sum(rows,'asis'); $('tR').innerHTML = record(rows) + avgNota(rows);
     const since = rows.filter(r=>r.fecha >= SINCE), n = since.length, rated = since.filter(r=>r.nota>0);
     const f = (v,d) => n ? (v/n).toFixed(d).replace('.',',') : '–';
     $('sP').textContent = `${n} partido${n===1?'':'s'}`;
@@ -306,38 +338,51 @@
     $('sR').innerHTML = record(since);
     const list = $('matchList');
     if(!ms.length){ list.innerHTML = '<div class="empty-msg">Sin partidos este mes.</div>'; return; }
-    list.innerHTML = ms.map(r => `
-      <div class="match ${r.fecha===entryKey?'sel':''}">
-        <div class="m-top"><div class="m-n">Partido N° ${r.n}${r.mod?`<span class="badge M">${r.mod}</span>`:""}${RES[r.res]?`<span class="badge ${r.res}">${RES[r.res]}</span>`:""}${r.nota?`<span class="badge N">⭐ ${r.nota}/10</span>`:""}</div><div class="m-date">${fullDate(r.fecha)}</div></div>
-        <div class="m-team"></div><div class="m-desc"></div>
-        <div class="m-stats">⏱ <b>${r.min}′</b> · ⚽ <b>${r.goles}</b> goles · 🅰️ <b>${r.asis}</b> asist.</div>
-        <div class="m-act">
-          <button class="btn btn-ghost btn-sm" data-e="${r.id}">Editar</button>
-          <button class="btn btn-ghost btn-sm del ${confirmId===r.id?'confirm':''}" data-x="${r.id}">${confirmId===r.id?'¿Borrar? Tocá de nuevo':'Borrar'}</button>
+    const LET = {V:'G',E:'E',D:'P'};
+    list.innerHTML = ms.map(r => { const [,mo,d] = r.fecha.split('-').map(Number); return `
+      <details class="match ${r.fecha===entryKey?'sel':''}" data-id="${r.id}" ${openIds.has(r.id)?'open':''}>
+        <summary>
+          <div class="m-n">${r.n}</div>
+          <div class="m-mid"><div class="m-date">${d}/${mo}${r.mod?' · '+r.mod:''}</div><div class="m-desc"></div></div>
+          <div class="m-res ${r.res||''}">${LET[r.res]||'–'}</div>
+          <div class="chev"></div>
+        </summary>
+        <div class="m-body">
+          <div class="m-date" style="margin-bottom:4px">${fullDate(r.fecha)}</div>
+          <div class="m-team"></div>
+          <div class="m-badges">${RES[r.res]?`<span class="badge ${r.res}">${RES[r.res]}</span>`:""}${r.mod?`<span class="badge M">${r.mod}</span>`:""}${r.nota?`<span class="badge N">Nota ${r.nota}</span>`:""}</div>
+          <div class="m-stats"><b>${r.min}′</b> MIN · <b>${r.goles}</b> GOL · <b>${r.asis}</b> AST</div>
+          <div class="m-act">
+            <button class="btn btn-ghost btn-sm" data-e="${r.id}">Editar</button>
+            <button class="btn btn-ghost btn-sm del ${confirmId===r.id?'confirm':''}" data-x="${r.id}">${confirmId===r.id?'¿Borrar? Tocá de nuevo':'Borrar'}</button>
+          </div>
         </div>
-      </div>`).join('');
-    list.querySelectorAll('.m-desc').forEach((el,i)=> el.textContent = ms[i].desc ? 'vs ' + ms[i].desc : '');
-    list.querySelectorAll('.m-team').forEach((el,i)=> { el.textContent = ms[i].equipo ? '🛡 ' + ms[i].equipo : ''; el.hidden = !ms[i].equipo; });
+      </details>`; }).join('');
+    list.querySelectorAll('.m-desc').forEach((el,i)=> el.textContent = ms[i].desc ? 'vs ' + ms[i].desc : 'Sin rival');
+    list.querySelectorAll('.m-team').forEach((el,i)=> { el.textContent = ms[i].equipo || ''; el.hidden = !ms[i].equipo; });
+    list.querySelectorAll('details').forEach(d => d.addEventListener('toggle', () => { d.open ? openIds.add(d.dataset.id) : openIds.delete(d.dataset.id); }));
   }
 
   const esc = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   function renderTeams(){
     const map = {};
-    rows.forEach(r => { const k = (r.equipo||'').trim() || 'Sin equipo'; (map[k] = map[k] || []).push(r); });
+    const teamSet = new Set();
+    rows.forEach(r => { const t = (r.equipo||'').trim() || 'Sin equipo'; if(r.equipo) teamSet.add(r.equipo.trim()); const k = t + '\u0001' + (r.mod||''); (map[k] = map[k] || []).push(r); });
     const names = Object.keys(map).sort((a,b)=> map[b].length - map[a].length || a.localeCompare(b));
-    $('equipos').innerHTML = names.filter(n=>n!=='Sin equipo').map(n=>`<option value="${esc(n)}">`).join('');
+    $('equipos').innerHTML = [...teamSet].sort().map(n=>`<option value="${esc(n)}">`).join('');
     if(!names.length){ $('teamTbl').innerHTML = '<div class="empty-msg">Todavía no cargaste partidos.</div>'; return; }
     $('teamTbl').innerHTML = `<table class="team-tbl"><thead><tr><th>Equipo</th><th>PJ</th><th>G-E-P</th><th>Min</th><th>Goles</th><th>Asist</th><th>Nota</th></tr></thead><tbody>` +
       names.map(n => { const a = map[n], c={V:0,E:0,D:0}; a.forEach(r=>{ if(c[r.res]!=null) c[r.res]++; });
         const rt = a.filter(r=>r.nota>0), nt = rt.length ? (rt.reduce((t,r)=>t+r.nota,0)/rt.length).toFixed(1).replace('.',',') : '–';
-        return `<tr><td>${esc(n)}</td><td>${a.length}</td><td>${c.V}-${c.E}-${c.D}</td><td>${sum(a,'min')}</td><td>${sum(a,'goles')}</td><td>${sum(a,'asis')}</td><td>${nt}</td></tr>`; }).join('') +
+        const [tn, tm] = n.split('\u0001');
+        return `<tr><td>${esc(tn)}<span class="team-sub">${esc(tm||'Sin modalidad')}</span></td><td>${a.length}</td><td>${c.V}-${c.E}-${c.D}</td><td>${sum(a,'min')}</td><td>${sum(a,'goles')}</td><td>${sum(a,'asis')}</td><td>${nt}</td></tr>`; }).join('') +
       `</tbody></table>`;
   }
   function renderAll(){ renderCalendar(); renderList(); renderTeams(); }
 
   function resetForm(){
     editId = null; $('desc').value=''; $('min').value=50; $('goles').value=0; $('asis').value=0; setRes(''); setNota(0);
-    $('btnSave').textContent='⚽ Registrar partido'; $('btnCancel').hidden = true;
+    $('btnSave').textContent='Registrar partido'; $('btnCancel').hidden = true;
   }
 
   async function save(){
