@@ -252,6 +252,7 @@
   <div class="card">
     <div class="section-title"><h3>Por equipo</h3></div>
     <div class="team-wrap" id="teamTbl"></div>
+    <button type="button" class="btn btn-ghost btn-sm" id="teamMore" style="width:100%;margin-top:10px" hidden></button>
   </div>
 
   <div class="card">
@@ -395,13 +396,14 @@
     $('equipos').innerHTML = [...teamSet].sort().map(n=>`<option value="${esc(n)}">`).join('');
     if(!names.length){ $('teamTbl').innerHTML = '<div class="empty-msg">Todavía no cargaste partidos.</div>'; return; }
     $('teamTbl').innerHTML = `<table class="team-tbl"><thead><tr><th>Equipo</th><th>PJ</th><th>G-E-P</th><th>Min</th><th>Goles</th><th>Asist</th><th>Nota</th></tr></thead><tbody>` +
-      names.map(n => { const a = map[n], c={V:0,E:0,D:0}; a.forEach(r=>{ if(c[r.res]!=null) c[r.res]++; });
+      (showAllTeams ? names : names.slice(0,4)).map(n => { const a = map[n], c={V:0,E:0,D:0}; a.forEach(r=>{ if(c[r.res]!=null) c[r.res]++; });
         const rt = a.filter(r=>r.nota>0), nt = rt.length ? (rt.reduce((t,r)=>t+r.nota,0)/rt.length).toFixed(1).replace('.',',') : '–';
         const [tn, tm] = n.split('\u0001');
         return `<tr><td>${esc(tn)}<span class="team-sub">${esc(tm||'Sin modalidad')}</span></td><td>${a.length}</td><td>${c.V}-${c.E}-${c.D}</td><td>${sum(a,'min')}</td><td>${sum(a,'goles')}</td><td>${sum(a,'asis')}</td><td>${nt}</td></tr>`; }).join('') +
       `</tbody></table>`;
+    const more = $('teamMore'); more.hidden = names.length <= 4; more.textContent = showAllTeams ? 'Ver solo top 4' : `Ver todos (${names.length})`;
   }
-  let splitKey = 'pj';
+  let splitKey = 'pj', showAllTeams = false;
   function renderSplit(){
     const map = {};
     rows.forEach(r => { const k = ((r.equipo||'').trim() || 'Sin equipo') + '\u0001' + (r.mod||''); const o = map[k] = map[k] || {pj:0,min:0}; o.pj++; o.min += +r.min||0; });
@@ -444,6 +446,7 @@
     $('btnEntryToday').onclick = () => { $('entryDateInput').value = todayKey(); refreshEntry(); const t=new Date(); viewYear=t.getFullYear(); viewMonth=t.getMonth(); renderAll(); };
     document.querySelectorAll('.step .ctl button').forEach(b => b.onclick = () => { const i=$(b.dataset.t); i.value = Math.max(0,(+i.value||0) + +b.dataset.d); });
     $('btnSave').onclick = save;
+    $('teamMore').onclick = () => { showAllTeams = !showAllTeams; renderTeams(); };
     document.querySelectorAll('.seg-btn').forEach(b => b.onclick = () => { splitKey = b.dataset.k;
       document.querySelectorAll('.seg-btn').forEach(x => { x.classList.toggle('active', x===b); x.setAttribute('aria-pressed', x===b); }); renderSplit(); });
     document.querySelectorAll('.mod-btn').forEach(b => b.onclick = () => setMod(mod===b.dataset.m ? '' : b.dataset.m));
