@@ -106,6 +106,18 @@
   .nota-btn.on{background:rgba(91,140,255,0.2); border-color:var(--blue); color:#9db8ff;}
   .nota-btn.sel{background:var(--blue); border-color:var(--blue); color:#fff;}
   .badge.N{background:rgba(91,140,255,0.18); color:#9db8ff;}
+  .team-wrap{overflow-x:auto;}
+  .team-tbl{width:100%; border-collapse:collapse; font-size:13px; font-variant-numeric:tabular-nums;}
+  .team-tbl th{font-size:10.5px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.4px; text-align:center; padding:6px 4px; border-bottom:1px solid var(--border);}
+  .team-tbl td{text-align:center; padding:9px 4px; border-bottom:1px solid var(--border);}
+  .team-tbl th:first-child,.team-tbl td:first-child{text-align:left;}
+  .team-tbl td:first-child{font-weight:700; overflow-wrap:anywhere;}
+  .team-tbl tr:last-child td{border-bottom:0;}
+  .m-team{font-size:12px; color:var(--accent2); font-weight:600; margin-bottom:2px;}
+  .mod-btn{border-radius:12px; padding:12px 4px; font-size:13.5px; font-weight:700; cursor:pointer; border:1px solid var(--border); background:var(--panel2); color:var(--muted); font-family:inherit; letter-spacing:.3px;}
+  .mod-btn:active{transform:scale(0.97);}
+  .mod-btn.active{background:var(--text); border-color:var(--text); color:var(--bg);}
+  .badge.M{background:var(--panel); border:1px solid var(--border); color:var(--text);}
   .del.confirm{color:var(--danger); border-color:rgba(229,72,77,.6);}
   .empty-msg{color:var(--muted); font-size:13px; text-align:center; padding:12px;}
   .footer-actions{display:flex; gap:10px; flex-wrap:wrap;}
@@ -136,7 +148,13 @@
       <input type="date" id="entryDateInput">
       <button class="btn btn-ghost btn-sm" id="btnEntryToday">Hoy</button>
     </div>
-    <label class="fld">Descripción<input type="text" id="desc" maxlength="120" placeholder="Ej: F5 con los del laburo"></label>
+    <label class="fld">Equipo<input type="text" id="equipo" list="equipos" maxlength="60" placeholder="Ej: Los Pibes FC"><datalist id="equipos"></datalist></label>
+    <div class="res-row" id="modRow">
+      <button type="button" class="mod-btn" data-m="FUTSAL">FUTSAL</button>
+      <button type="button" class="mod-btn" data-m="FÚTBOL 11">FÚTBOL 11</button>
+      <button type="button" class="mod-btn" data-m="FÚTBOL 8">FÚTBOL 8</button>
+    </div>
+    <label class="fld">Rival<input type="text" id="desc" maxlength="60" placeholder="Ej: Deportivo Norte"></label>
     <div class="steps">
       <div class="step"><div class="lbl">Minutos</div><input class="val" id="min" type="number" inputmode="numeric" min="0" value="50"><div class="ctl"><button data-t="min" data-d="-5">−</button><button data-t="min" data-d="5">+</button></div></div>
       <div class="step g"><div class="lbl">Goles</div><input class="val" id="goles" type="number" inputmode="numeric" min="0" value="0"><div class="ctl"><button data-t="goles" data-d="-1">−</button><button data-t="goles" data-d="1">+</button></div></div>
@@ -185,6 +203,11 @@
   </div>
 
   <div class="card">
+    <div class="section-title"><h3>Por equipo</h3></div>
+    <div class="team-wrap" id="teamTbl"></div>
+  </div>
+
+  <div class="card">
     <div class="section-title"><h3>Promedios desde el 22/09/2026</h3><span class="m-date" id="sP"></span></div>
     <div class="totals career">
       <div class="tot"><div class="mt-lbl">Nota</div><div class="mt-val" id="sN">–</div></div>
@@ -220,7 +243,7 @@
   const LS = "mispartidos.v1";
   const MONTH_NAMES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
   const DAY_NAMES = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
-  let nota = 0, res = "", rows = [], db = null, editId = null, confirmId = null, viewYear, viewMonth, entryKey;
+  let mod = "", nota = 0, res = "", rows = [], db = null, editId = null, confirmId = null, viewYear, viewMonth, entryKey;
 
   const pad = n => String(n).padStart(2,'0');
   const dateKey = (y,m,d) => `${y}-${pad(m+1)}-${pad(d)}`;
@@ -236,6 +259,7 @@
   function record(arr){ const c={V:0,E:0,D:0}; arr.forEach(r=>{ if(c[r.res]!=null) c[r.res]++; });
     const n=c.V+c.E+c.D; if(!n) return '';
     return `<b class="V">${c.V}</b> ganados · <b class="E">${c.E}</b> empatados · <b class="D">${c.D}</b> perdidos · ${Math.round(c.V*100/n)}% victorias`; }
+  function setMod(m){ mod = m; document.querySelectorAll('.mod-btn').forEach(b=>b.classList.toggle('active', b.dataset.m===mod)); }
   function setNota(n){ nota = n; $('notaTxt').textContent = n ? `· ${n}/10` : '';
     document.querySelectorAll('.nota-btn').forEach(b=>{ const v=+b.dataset.n; b.classList.toggle('on', v<n); b.classList.toggle('sel', v===n); }); }
   function avgNota(arr){ const v=arr.filter(r=>r.nota>0); return v.length ? ` · nota promedio <b>${(v.reduce((t,r)=>t+r.nota,0)/v.length).toFixed(1)}</b>` : ''; }
@@ -284,18 +308,32 @@
     if(!ms.length){ list.innerHTML = '<div class="empty-msg">Sin partidos este mes.</div>'; return; }
     list.innerHTML = ms.map(r => `
       <div class="match ${r.fecha===entryKey?'sel':''}">
-        <div class="m-top"><div class="m-n">Partido N° ${r.n}${RES[r.res]?`<span class="badge ${r.res}">${RES[r.res]}</span>`:""}${r.nota?`<span class="badge N">⭐ ${r.nota}/10</span>`:""}</div><div class="m-date">${fullDate(r.fecha)}</div></div>
-        <div class="m-desc"></div>
+        <div class="m-top"><div class="m-n">Partido N° ${r.n}${r.mod?`<span class="badge M">${r.mod}</span>`:""}${RES[r.res]?`<span class="badge ${r.res}">${RES[r.res]}</span>`:""}${r.nota?`<span class="badge N">⭐ ${r.nota}/10</span>`:""}</div><div class="m-date">${fullDate(r.fecha)}</div></div>
+        <div class="m-team"></div><div class="m-desc"></div>
         <div class="m-stats">⏱ <b>${r.min}′</b> · ⚽ <b>${r.goles}</b> goles · 🅰️ <b>${r.asis}</b> asist.</div>
         <div class="m-act">
           <button class="btn btn-ghost btn-sm" data-e="${r.id}">Editar</button>
           <button class="btn btn-ghost btn-sm del ${confirmId===r.id?'confirm':''}" data-x="${r.id}">${confirmId===r.id?'¿Borrar? Tocá de nuevo':'Borrar'}</button>
         </div>
       </div>`).join('');
-    list.querySelectorAll('.m-desc').forEach((el,i)=> el.textContent = ms[i].desc);
+    list.querySelectorAll('.m-desc').forEach((el,i)=> el.textContent = ms[i].desc ? 'vs ' + ms[i].desc : '');
+    list.querySelectorAll('.m-team').forEach((el,i)=> { el.textContent = ms[i].equipo ? '🛡 ' + ms[i].equipo : ''; el.hidden = !ms[i].equipo; });
   }
 
-  function renderAll(){ renderCalendar(); renderList(); }
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  function renderTeams(){
+    const map = {};
+    rows.forEach(r => { const k = (r.equipo||'').trim() || 'Sin equipo'; (map[k] = map[k] || []).push(r); });
+    const names = Object.keys(map).sort((a,b)=> map[b].length - map[a].length || a.localeCompare(b));
+    $('equipos').innerHTML = names.filter(n=>n!=='Sin equipo').map(n=>`<option value="${esc(n)}">`).join('');
+    if(!names.length){ $('teamTbl').innerHTML = '<div class="empty-msg">Todavía no cargaste partidos.</div>'; return; }
+    $('teamTbl').innerHTML = `<table class="team-tbl"><thead><tr><th>Equipo</th><th>PJ</th><th>G-E-P</th><th>Min</th><th>Goles</th><th>Asist</th><th>Nota</th></tr></thead><tbody>` +
+      names.map(n => { const a = map[n], c={V:0,E:0,D:0}; a.forEach(r=>{ if(c[r.res]!=null) c[r.res]++; });
+        const rt = a.filter(r=>r.nota>0), nt = rt.length ? (rt.reduce((t,r)=>t+r.nota,0)/rt.length).toFixed(1).replace('.',',') : '–';
+        return `<tr><td>${esc(n)}</td><td>${a.length}</td><td>${c.V}-${c.E}-${c.D}</td><td>${sum(a,'min')}</td><td>${sum(a,'goles')}</td><td>${sum(a,'asis')}</td><td>${nt}</td></tr>`; }).join('') +
+      `</tbody></table>`;
+  }
+  function renderAll(){ renderCalendar(); renderList(); renderTeams(); }
 
   function resetForm(){
     editId = null; $('desc').value=''; $('min').value=50; $('goles').value=0; $('asis').value=0; setRes(''); setNota(0);
@@ -303,8 +341,8 @@
   }
 
   async function save(){
-    const data = { fecha: entryKey, desc: $('desc').value.trim() || 'Partido',
-      min: Math.max(0, +$('min').value||0), goles: Math.max(0, +$('goles').value||0), asis: Math.max(0, +$('asis').value||0), res, nota };
+    const data = { fecha: entryKey, equipo: $('equipo').value.trim(), desc: $('desc').value.trim(),
+      min: Math.max(0, +$('min').value||0), goles: Math.max(0, +$('goles').value||0), asis: Math.max(0, +$('asis').value||0), res, nota, mod };
     let r, was = !!editId;
     if(editId){ r = rows.find(x=>x.id===editId); Object.assign(r, data); }
     else { const n = rows.reduce((m,x)=>Math.max(m,x.n),0)+1; r = { id:'p'+pad(n).padStart(5,'0'), n, ts:Date.now(), ...data }; rows.push(r); }
@@ -324,6 +362,7 @@
     $('btnEntryToday').onclick = () => { $('entryDateInput').value = todayKey(); refreshEntry(); const t=new Date(); viewYear=t.getFullYear(); viewMonth=t.getMonth(); renderAll(); };
     document.querySelectorAll('.step .ctl button').forEach(b => b.onclick = () => { const i=$(b.dataset.t); i.value = Math.max(0,(+i.value||0) + +b.dataset.d); });
     $('btnSave').onclick = save;
+    document.querySelectorAll('.mod-btn').forEach(b => b.onclick = () => setMod(mod===b.dataset.m ? '' : b.dataset.m));
     const nr = $('notaRow'); for(let i=1;i<=10;i++){ const b=document.createElement('button'); b.type='button'; b.className='nota-btn'; b.dataset.n=i; b.textContent=i; b.onclick=()=>setNota(nota===i?0:i); nr.appendChild(b); }
     document.querySelectorAll('.res-btn').forEach(b => b.onclick = () => setRes(res===b.dataset.r ? '' : b.dataset.r));
     $('btnCancel').onclick = resetForm;
@@ -334,7 +373,7 @@
     $('matchList').addEventListener('click', async e => {
       const b = e.target.closest('button'); if(!b) return;
       if(b.dataset.e){ const r = rows.find(q=>q.id===b.dataset.e); editId=r.id;
-        $('entryDateInput').value=r.fecha; refreshEntry(); $('desc').value=r.desc; $('min').value=r.min; $('goles').value=r.goles; $('asis').value=r.asis; setRes(r.res||''); setNota(r.nota||0);
+        $('entryDateInput').value=r.fecha; refreshEntry(); $('desc').value=r.desc; $('equipo').value=r.equipo||''; $('min').value=r.min; $('goles').value=r.goles; $('asis').value=r.asis; setRes(r.res||''); setNota(r.nota||0); setMod(r.mod||'');
         $('btnSave').textContent=`Guardar cambios N° ${r.n}`; $('btnCancel').hidden=false; renderAll(); window.scrollTo({top:0,behavior:'smooth'}); }
       if(b.dataset.x){ const id=b.dataset.x;
         if(confirmId!==id){ confirmId=id; renderList(); return; }
