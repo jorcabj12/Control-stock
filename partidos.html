@@ -86,6 +86,20 @@
   .m-stats{font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums;}
   .m-stats b{color:var(--text);}
   .m-act{display:flex; gap:6px; margin-top:8px;}
+  .res-row{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px;}
+  .res-btn{border-radius:12px; padding:13px 6px; font-size:14.5px; font-weight:700; cursor:pointer; border:1px solid var(--border); background:var(--panel2); color:var(--muted); font-family:inherit;}
+  .res-btn:active{transform:scale(0.97);}
+  .res-btn.V.active{background:rgba(46,204,113,0.18); border-color:var(--accent); color:var(--accent2);}
+  .res-btn.E.active{background:rgba(245,197,66,0.16); border-color:var(--gold); color:var(--gold);}
+  .res-btn.D.active{background:rgba(229,72,77,0.16); border-color:var(--danger); color:#ff7b7f;}
+  .badge{font-size:11.5px; font-weight:700; border-radius:99px; padding:2px 8px; margin-left:6px;}
+  .badge.V{background:rgba(46,204,113,0.18); color:var(--accent2);}
+  .badge.E{background:rgba(245,197,66,0.16); color:var(--gold);}
+  .badge.D{background:rgba(229,72,77,0.16); color:#ff7b7f;}
+  .record{font-size:13px; color:var(--muted); margin:-4px 0 12px; font-variant-numeric:tabular-nums;}
+  .record b.V{color:var(--accent2);} .record b.E{color:var(--gold);} .record b.D{color:#ff7b7f;}
+  .day-cell.rE{background:rgba(245,197,66,0.16); border-color:rgba(245,197,66,0.5);}
+  .day-cell.rD{background:rgba(229,72,77,0.16); border-color:rgba(229,72,77,0.5);}
   .del.confirm{color:var(--danger); border-color:rgba(229,72,77,.6);}
   .empty-msg{color:var(--muted); font-size:13px; text-align:center; padding:12px;}
   .footer-actions{display:flex; gap:10px; flex-wrap:wrap;}
@@ -122,6 +136,11 @@
       <div class="step g"><div class="lbl">Goles</div><input class="val" id="goles" type="number" inputmode="numeric" min="0" value="0"><div class="ctl"><button data-t="goles" data-d="-1">−</button><button data-t="goles" data-d="1">+</button></div></div>
       <div class="step a"><div class="lbl">Asist.</div><input class="val" id="asis" type="number" inputmode="numeric" min="0" value="0"><div class="ctl"><button data-t="asis" data-d="-1">−</button><button data-t="asis" data-d="1">+</button></div></div>
     </div>
+    <div class="res-row" id="resRow">
+      <button type="button" class="res-btn V" data-r="V">✅ Victoria</button>
+      <button type="button" class="res-btn E" data-r="E">🤝 Empate</button>
+      <button type="button" class="res-btn D" data-r="D">❌ Derrota</button>
+    </div>
     <div class="row">
       <button class="btn btn-primary" id="btnSave" style="flex:1;">⚽ Registrar partido</button>
       <button class="btn btn-ghost" id="btnCancel" hidden>Cancelar</button>
@@ -141,7 +160,7 @@
     <div class="days-grid" id="daysGrid"></div>
     <div class="legend">
       <span class="sw"><span class="dot2" style="background:var(--panel2);border:1px solid var(--border)"></span> Sin partido</span>
-      <span class="sw"><span class="dot2" style="background:var(--accent)"></span> Jugué (#N° de partido)</span>
+      <span class="sw"><span class="dot2" style="background:var(--accent)"></span> Victoria</span><span class="sw"><span class="dot2" style="background:var(--gold)"></span> Empate</span><span class="sw"><span class="dot2" style="background:var(--danger)"></span> Derrota</span><span class="sw">#N° de partido</span>
     </div>
   </div>
 
@@ -153,6 +172,7 @@
       <div class="tot"><div class="mt-lbl">Goles</div><div class="mt-val" id="mG">0</div></div>
       <div class="tot"><div class="mt-lbl">Asist.</div><div class="mt-val" id="mA">0</div></div>
     </div>
+    <div class="record" id="mR"></div>
     <div id="matchList"></div>
   </div>
 
@@ -164,6 +184,7 @@
       <div class="tot"><div class="mt-lbl">Goles</div><div class="mt-val" id="tG">0</div></div>
       <div class="tot"><div class="mt-lbl">Asist.</div><div class="mt-val" id="tA">0</div></div>
     </div>
+    <div class="record" id="tR"></div>
     <div class="footer-actions">
       <button class="btn btn-secondary btn-sm" id="btnExport">Exportar copia</button>
       <label class="btn btn-secondary btn-sm">Importar copia<input type="file" id="imp" accept=".json" hidden></label>
@@ -180,7 +201,7 @@
   const LS = "mispartidos.v1";
   const MONTH_NAMES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
   const DAY_NAMES = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
-  let rows = [], db = null, editId = null, confirmId = null, viewYear, viewMonth, entryKey;
+  let res = "", rows = [], db = null, editId = null, confirmId = null, viewYear, viewMonth, entryKey;
 
   const pad = n => String(n).padStart(2,'0');
   const dateKey = (y,m,d) => `${y}-${pad(m+1)}-${pad(d)}`;
@@ -191,6 +212,11 @@
   function lsLoad(){ try{ return JSON.parse(localStorage.getItem(LS)||"[]"); }catch(e){ return []; } }
   function lsSave(){ try{ localStorage.setItem(LS, JSON.stringify(rows)); }catch(e){} }
   const sum = (arr,k) => arr.reduce((t,r)=>t+(+r[k]||0),0);
+  const RES = {V:'Victoria',E:'Empate',D:'Derrota'};
+  function record(arr){ const c={V:0,E:0,D:0}; arr.forEach(r=>{ if(c[r.res]!=null) c[r.res]++; });
+    const n=c.V+c.E+c.D; if(!n) return '';
+    return `<b class="V">${c.V}</b> ganados · <b class="E">${c.E}</b> empatados · <b class="D">${c.D}</b> perdidos · ${Math.round(c.V*100/n)}% victorias`; }
+  function setRes(r){ res = r; document.querySelectorAll('.res-btn').forEach(b=>b.classList.toggle('active', b.dataset.r===res)); }
 
   function refreshEntry(){
     entryKey = $('entryDateInput').value || todayKey();
@@ -208,7 +234,7 @@
       const key = dateKey(viewYear, viewMonth, d);
       const ms = rows.filter(r=>r.fecha===key).sort((a,b)=>a.n-b.n);
       let cls = 'day-cell';
-      if(ms.length) cls += ' played';
+      if(ms.length){ cls += ' played'; const last = ms[ms.length-1].res; if(last==='E'||last==='D') cls += ' r'+last; }
       if(key === tKey) cls += ' today';
       if(key === entryKey) cls += ' selected';
       const el = document.createElement('div');
@@ -223,13 +249,13 @@
     const prefix = `${viewYear}-${pad(viewMonth+1)}-`;
     const ms = rows.filter(r=>r.fecha.startsWith(prefix)).sort((a,b)=>b.fecha.localeCompare(a.fecha)||b.n-a.n);
     $('listMonthLabel').textContent = `${MONTH_NAMES[viewMonth]} ${viewYear}`;
-    $('mP').textContent = ms.length; $('mM').textContent = sum(ms,'min'); $('mG').textContent = sum(ms,'goles'); $('mA').textContent = sum(ms,'asis');
-    $('tP').textContent = rows.length; $('tM').textContent = sum(rows,'min'); $('tG').textContent = sum(rows,'goles'); $('tA').textContent = sum(rows,'asis');
+    $('mP').textContent = ms.length; $('mM').textContent = sum(ms,'min'); $('mG').textContent = sum(ms,'goles'); $('mA').textContent = sum(ms,'asis'); $('mR').innerHTML = record(ms);
+    $('tP').textContent = rows.length; $('tM').textContent = sum(rows,'min'); $('tG').textContent = sum(rows,'goles'); $('tA').textContent = sum(rows,'asis'); $('tR').innerHTML = record(rows);
     const list = $('matchList');
     if(!ms.length){ list.innerHTML = '<div class="empty-msg">Sin partidos este mes.</div>'; return; }
     list.innerHTML = ms.map(r => `
       <div class="match ${r.fecha===entryKey?'sel':''}">
-        <div class="m-top"><div class="m-n">Partido N° ${r.n}</div><div class="m-date">${fullDate(r.fecha)}</div></div>
+        <div class="m-top"><div class="m-n">Partido N° ${r.n}${RES[r.res]?`<span class="badge ${r.res}">${RES[r.res]}</span>`:""}</div><div class="m-date">${fullDate(r.fecha)}</div></div>
         <div class="m-desc"></div>
         <div class="m-stats">⏱ <b>${r.min}′</b> · ⚽ <b>${r.goles}</b> goles · 🅰️ <b>${r.asis}</b> asist.</div>
         <div class="m-act">
@@ -243,13 +269,13 @@
   function renderAll(){ renderCalendar(); renderList(); }
 
   function resetForm(){
-    editId = null; $('desc').value=''; $('min').value=50; $('goles').value=0; $('asis').value=0;
+    editId = null; $('desc').value=''; $('min').value=50; $('goles').value=0; $('asis').value=0; setRes('');
     $('btnSave').textContent='⚽ Registrar partido'; $('btnCancel').hidden = true;
   }
 
   async function save(){
     const data = { fecha: entryKey, desc: $('desc').value.trim() || 'Partido',
-      min: Math.max(0, +$('min').value||0), goles: Math.max(0, +$('goles').value||0), asis: Math.max(0, +$('asis').value||0) };
+      min: Math.max(0, +$('min').value||0), goles: Math.max(0, +$('goles').value||0), asis: Math.max(0, +$('asis').value||0), res };
     let r, was = !!editId;
     if(editId){ r = rows.find(x=>x.id===editId); Object.assign(r, data); }
     else { const n = rows.reduce((m,x)=>Math.max(m,x.n),0)+1; r = { id:'p'+pad(n).padStart(5,'0'), n, ts:Date.now(), ...data }; rows.push(r); }
@@ -269,6 +295,7 @@
     $('btnEntryToday').onclick = () => { $('entryDateInput').value = todayKey(); refreshEntry(); const t=new Date(); viewYear=t.getFullYear(); viewMonth=t.getMonth(); renderAll(); };
     document.querySelectorAll('.step .ctl button').forEach(b => b.onclick = () => { const i=$(b.dataset.t); i.value = Math.max(0,(+i.value||0) + +b.dataset.d); });
     $('btnSave').onclick = save;
+    document.querySelectorAll('.res-btn').forEach(b => b.onclick = () => setRes(res===b.dataset.r ? '' : b.dataset.r));
     $('btnCancel').onclick = resetForm;
     $('btnPrevMonth').onclick = () => { viewMonth--; if(viewMonth<0){viewMonth=11;viewYear--;} confirmId=null; renderAll(); };
     $('btnNextMonth').onclick = () => { viewMonth++; if(viewMonth>11){viewMonth=0;viewYear++;} confirmId=null; renderAll(); };
@@ -277,7 +304,7 @@
     $('matchList').addEventListener('click', async e => {
       const b = e.target.closest('button'); if(!b) return;
       if(b.dataset.e){ const r = rows.find(q=>q.id===b.dataset.e); editId=r.id;
-        $('entryDateInput').value=r.fecha; refreshEntry(); $('desc').value=r.desc; $('min').value=r.min; $('goles').value=r.goles; $('asis').value=r.asis;
+        $('entryDateInput').value=r.fecha; refreshEntry(); $('desc').value=r.desc; $('min').value=r.min; $('goles').value=r.goles; $('asis').value=r.asis; setRes(r.res||'');
         $('btnSave').textContent=`Guardar cambios N° ${r.n}`; $('btnCancel').hidden=false; renderAll(); window.scrollTo({top:0,behavior:'smooth'}); }
       if(b.dataset.x){ const id=b.dataset.x;
         if(confirmId!==id){ confirmId=id; renderList(); return; }
